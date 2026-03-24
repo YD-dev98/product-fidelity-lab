@@ -235,7 +235,20 @@ async def main() -> None:
         print(f"ERROR: spec {experiment.shot_id!r} has no image_url")
         return
 
-    output_dir = settings.data_dir / "runs" / "experiments" / experiment.name
+    # Timestamped folder unless resuming an existing one
+    if resume:
+        # Find existing experiment dir by name prefix
+        experiments_root = settings.data_dir / "runs" / "experiments"
+        existing = sorted(experiments_root.glob(f"*_{experiment.name}"))
+        if existing:
+            output_dir = existing[-1]  # most recent
+        else:
+            print(f"ERROR: no existing experiment matching *_{experiment.name} to resume")
+            return
+    else:
+        from datetime import UTC, datetime
+        ts = datetime.now(tz=UTC).strftime("%Y-%m-%d")
+        output_dir = settings.data_dir / "runs" / "experiments" / f"{ts}_{experiment.name}"
     manifest_path = output_dir / "manifest.json"
 
     # Resolve helpers
@@ -466,20 +479,25 @@ async def main() -> None:
     completed_labels = {r.dir_name for r in manifest.resolved_runs if r.status == "complete"}
     terminal_labels = {r.dir_name for r in manifest.resolved_runs if r.status == "failed_terminal"}
 
+    # Track phase 1 dir_names to avoid double-counting
+    phase_1_dir_names = {r.config.dir_name for r in phase_1_results}
+
     for i, config in enumerate(phase_2_configs, 1):
         if config.dir_name in completed_labels or config.dir_name in terminal_labels:
             print(f"  [{i}/{len(phase_2_configs)}] {config.dir_name} — skipped")
-            report_path = output_dir / "runs" / config.dir_name / "report.json"
-            if report_path.exists():
-                rdata = json.loads(report_path.read_text())
-                r = extract_result(
-                    config=config,
-                    report=rdata["evaluation"]["report"],
-                    image_url=rdata["generation"]["image_url"],
-                    cost=rdata["generation"]["cost"],
-                    duration_ms=0,
-                )
-                phase_2_results.append(r)
+            # Only load if not already in phase 1 results
+            if config.dir_name not in phase_1_dir_names:
+                report_path = output_dir / "runs" / config.dir_name / "report.json"
+                if report_path.exists():
+                    rdata = json.loads(report_path.read_text())
+                    r = extract_result(
+                        config=config,
+                        report=rdata["evaluation"]["report"],
+                        image_url=rdata["generation"]["image_url"],
+                        cost=rdata["generation"]["cost"],
+                        duration_ms=0,
+                    )
+                    phase_2_results.append(r)
             continue
 
         if total_cost + COST_PER_RUN > experiment.budget_cap:
