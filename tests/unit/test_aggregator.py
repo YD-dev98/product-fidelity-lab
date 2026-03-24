@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from product_fidelity_lab.evaluation.aggregator import aggregate, compute_grade, compute_grade_from_thresholds
+from product_fidelity_lab.evaluation.aggregator import (
+    aggregate,
+    compute_grade,
+    compute_grade_from_thresholds,
+)
 from product_fidelity_lab.models.evaluation import (
     AFVReport,
     BrandReport,

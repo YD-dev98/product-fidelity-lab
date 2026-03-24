@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from product_fidelity_lab.evaluation.layer_brand import _is_contiguous_subsequence, _tokenize, compare_text
+from product_fidelity_lab.evaluation.layer_brand import (
+    _is_contiguous_subsequence,
+    _tokenize,
+    compare_text,
+)
 from product_fidelity_lab.models.golden_spec import ExpectedText
 
 
