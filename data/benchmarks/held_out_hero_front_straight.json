@@ -1,0 +1,21 @@
+{
+  "benchmark_id": "held_out_hero_front_straight",
+  "mode": "held_out_synthesis",
+  "target_shot_id": "hero_front_straight",
+  "description": "Generate hero_front_straight from non-target references only. Target image must never appear in generation or edit inputs.",
+  "allowed_reference_shot_ids": [
+    "hero_front_left_45",
+    "hero_front_right_45",
+    "label_closeup",
+    "cap_closeup",
+    "glass_material_detail"
+  ],
+  "forbidden_shot_ids": [
+    "hero_front_straight"
+  ],
+  "success_criteria": {
+    "primary": "at least one B or better with no hard-gate failures",
+    "secondary": "text_score > 0.20 and brand_score > 0.50",
+    "stretch": "any A grade"
+  }
+}
