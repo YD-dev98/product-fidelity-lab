@@ -1,0 +1,93 @@
+{
+  "shot_id": "challenge_double_glass_occlusion",
+  "image_path": "validation/challenge_double_glass_occlusion.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b2/pm01K2ithyS3xWZbT002Y_challenge_double_glass_occlusion.jpg",
+  "category": "validation",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle remains identifiable as the primary product in frame.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "TEXT",
+      "fact": "The main label remains visible enough to read the brand name despite foreground occlusion.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "GEOMETRY",
+      "fact": "Two empty glasses stand in front of the bottle.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F4",
+      "category": "GEOMETRY",
+      "fact": "The foreground glasses obscure part of the lower bottle and label.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "MATERIAL",
+      "fact": "The clear glass bottle and subtle green base remain visible.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "LIGHTING",
+      "fact": "The scene remains a bright white studio setup.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#D0A85E",
+    "#1A1A1A"
+  ],
+  "rois": [
+    {
+      "x": 0.33,
+      "y": 0.08,
+      "width": 0.35,
+      "height": 0.8,
+      "label": "product"
+    },
+    {
+      "x": 0.38,
+      "y": 0.48,
+      "width": 0.25,
+      "height": 0.3,
+      "label": "label"
+    },
+    {
+      "x": 0.44,
+      "y": 0.59,
+      "width": 0.15,
+      "height": 0.14,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A hero shot of a Bacardi Superior rum bottle with two empty glasses in the foreground, on a white surface against a white background.",
+  "challenge_type": "double_glass_occlusion"
+}

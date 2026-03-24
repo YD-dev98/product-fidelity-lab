@@ -1,0 +1,112 @@
+{
+  "shot_id": "label_closeup",
+  "image_path": "training/label_closeup.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b8/mWKBFD5PXZj1iyfdyyqGD_label_closeup.jpg",
+  "category": "training",
+  "shot_type": "detail",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The front label is the primary subject of the frame.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "MATERIAL",
+      "fact": "Gold foil accents are visible across the label.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "DETAIL",
+      "fact": "The bat logo is clearly visible on the label.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "COLOR",
+      "fact": "The label palette is dominated by off-white, black, and gold.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F5",
+      "category": "DETAIL",
+      "fact": "Medal graphics are visible on the label.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "DETAIL",
+      "fact": "A coat-of-arms detail is visible near the bottom of the label.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F7",
+      "category": "GEOMETRY",
+      "fact": "The label is photographed at a slight angle rather than perfectly flat.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "ORIGINAL PREMIUM RUM",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "RON CARTA BLANCA",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#F5F5F0",
+    "#1A1A1A",
+    "#C8A951",
+    "#7F3C3C"
+  ],
+  "rois": [
+    {
+      "x": 0.03,
+      "y": 0.01,
+      "width": 0.94,
+      "height": 0.98,
+      "label": "product"
+    },
+    {
+      "x": 0.03,
+      "y": 0.01,
+      "width": 0.94,
+      "height": 0.98,
+      "label": "label"
+    },
+    {
+      "x": 0.38,
+      "y": 0.05,
+      "width": 0.24,
+      "height": 0.18,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A close-up of the front label of a Bacardi Superior rum bottle against a white background.",
+  "challenge_type": null
+}

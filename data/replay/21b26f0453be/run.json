@@ -1,0 +1,267 @@
+{
+  "id": "21b26f0453be",
+  "type": "evaluation",
+  "status": "complete",
+  "layer_states": {
+    "afv": "complete",
+    "depth": "complete",
+    "brand": "complete"
+  },
+  "created_at": "2026-03-24 01:47:59.425643",
+  "updated_at": "2026-03-24 01:48:26.933970",
+  "config": {
+    "label": "perturbation_baseline",
+    "spec_id": "hero_front_straight"
+  },
+  "result": {
+    "afv": {
+      "facts": [
+        {
+          "id": "F1",
+          "category": "GEOMETRY",
+          "fact": "The bottle is upright and centered in a clean front-facing hero shot.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F2",
+          "category": "MATERIAL",
+          "fact": "The bottle contains clear, colorless liquid.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F3",
+          "category": "TEXT",
+          "fact": "The main front label is clearly visible on the bottle body.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F4",
+          "category": "LIGHTING",
+          "fact": "The bottle is photographed against a bright white studio background with soft, even lighting.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F5",
+          "category": "MATERIAL",
+          "fact": "The bottle is clear glass with a subtle green tint near the base.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F6",
+          "category": "DETAIL",
+          "fact": "The silver screw cap shows visible ridged texture.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F7",
+          "category": "DETAIL",
+          "fact": "The '1862' embossing is visible on the shoulder of the bottle.",
+          "critical": false,
+          "importance": "medium"
+        }
+      ],
+      "verdicts": [
+        {
+          "fact_id": "F1",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The image shows a full, straight-on view of the bottle positioned in the center of the frame, characteristic of a standard product hero shot."
+        },
+        {
+          "fact_id": "F2",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The liquid visible through the clear glass bottle is transparent and lacks any color."
+        },
+        {
+          "fact_id": "F3",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The central label bearing the brand name 'BACARDI SUPERIOR' is prominently displayed, front-facing, and perfectly legible."
+        },
+        {
+          "fact_id": "F4",
+          "verdict": true,
+          "confidence": 0.95,
+          "reasoning": "The background is a seamless bright white, and the lighting is standard studio lighting, defining the bottle's shape with long catchlights without harsh drop shadows."
+        },
+        {
+          "fact_id": "F5",
+          "verdict": true,
+          "confidence": 0.98,
+          "reasoning": "The main body of the bottle is clear glass, while the thick glass at the very bottom base exhibits a distinctly visible light green tint."
+        },
+        {
+          "fact_id": "F6",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The cap is metallic silver in appearance and features clear vertical ridges for grip along its upper section."
+        },
+        {
+          "fact_id": "F7",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The raised glass numbers '1862' are clearly visible embossed on the curved shoulder area directly above the main paper label."
+        }
+      ],
+      "score": 1.0,
+      "category_breakdown": {
+        "GEOMETRY": 1.0,
+        "MATERIAL": 1.0,
+        "TEXT": 1.0,
+        "LIGHTING": 1.0,
+        "DETAIL": 1.0
+      },
+      "critical_failures": [],
+      "error": null
+    },
+    "depth": {
+      "ssim": 1.0,
+      "correlation": 1.0,
+      "mse": 0.0,
+      "combined": 1.0,
+      "roi_used": true,
+      "error": null
+    },
+    "brand": {
+      "text_score": {
+        "matches": [
+          {
+            "expected": "BACARDI",
+            "matched": true,
+            "score": 1.0,
+            "match_mode": "exact_token",
+            "critical": true
+          },
+          {
+            "expected": "SUPERIOR",
+            "matched": true,
+            "score": 1.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "ORIGINAL PREMIUM RUM",
+            "matched": true,
+            "score": 1.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "RON CARTA BLANCA",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "CASA FUNDADA EN 1862",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "37.5% vol",
+            "matched": true,
+            "score": 1.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "70cl e",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          }
+        ],
+        "score": 0.5714285714285714,
+        "critical_failures": [],
+        "extracted_texts": [
+          "1862 BACARDI SUPERIOR ORIGINAL PREMIUM RUM RON CAR TABLANCA CASA FUNDADA BN 1862 37.5% VOL RUM 70 cle"
+        ]
+      },
+      "color_score": {
+        "brand_colors_hex": [
+          "#f2ede4",
+          "#1a1a1a",
+          "#a78f56",
+          "#c22026"
+        ],
+        "extracted_colors_hex": [
+          "#2c1f17",
+          "#fbfcfc",
+          "#9f9e92",
+          "#cfd4d0",
+          "#656155"
+        ],
+        "pairs": [
+          {
+            "brand_hex": "#f2ede4",
+            "closest_extracted_hex": "#fbfcfc",
+            "delta_e": 5.797402521243612
+          },
+          {
+            "brand_hex": "#1a1a1a",
+            "closest_extracted_hex": "#2c1f17",
+            "delta_e": 9.270598958521497
+          },
+          {
+            "brand_hex": "#a78f56",
+            "closest_extracted_hex": "#9f9e92",
+            "delta_e": 15.448301944782335
+          },
+          {
+            "brand_hex": "#c22026",
+            "closest_extracted_hex": "#656155",
+            "delta_e": 29.33950305856402
+          }
+        ],
+        "score": 0.7007209675844427
+      },
+      "combined_score": 0.6490040091220942,
+      "critical_failures": [],
+      "error": null
+    },
+    "final": {
+      "overall": 0.8947012027366282,
+      "grade": "A",
+      "passed": true,
+      "outcome": "graded",
+      "hard_gate_failures": [],
+      "incomplete_reasons": [],
+      "incomplete_layers": [],
+      "breakdown": {
+        "afv": 1.0,
+        "depth": 1.0,
+        "brand": 0.6490040091220942
+      },
+      "confidence": 1.0
+    },
+    "run_metadata": {
+      "generated_image_url": "https://v3b.fal.media/files/b/0a92d7b8/ExmqykKU9nG45uRucQ4W8_hero_front_straight.jpg",
+      "golden_spec_id": "hero_front_straight",
+      "duration_ms": 27505,
+      "grade_thresholds": {
+        "A": 0.8272711389781375,
+        "B": 0.7002100837140799,
+        "C": 0.573149028450022,
+        "D": 0.4460879731859643
+      },
+      "pass_threshold": 0.7002100837140799,
+      "thresholds_source": "data/calibration/thresholds.json"
+    }
+  },
+  "score": 0.8947012027366282,
+  "grade": "A",
+  "passed": true,
+  "duration_ms": 27505,
+  "cost": null
+}

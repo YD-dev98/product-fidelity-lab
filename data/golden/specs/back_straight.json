@@ -1,0 +1,76 @@
+{
+  "shot_id": "back_straight",
+  "image_path": "training/back_straight.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b0/p77JTctj8zdhneM5LIivs_back_straight.jpg",
+  "category": "training",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle is upright in a direct back view.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "TEXT",
+      "fact": "A back paper label is clearly present on the bottle.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "MATERIAL",
+      "fact": "The bottle is clear glass with a slightly green thicker base.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "DETAIL",
+      "fact": "The '1862' embossing is visible on the shoulder.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "DETAIL",
+      "fact": "Embossed 'BACARDI' lettering is visible in the lower glass/body area.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "LIGHTING",
+      "fact": "The bottle is photographed against a bright white background with soft, even lighting.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [],
+  "brand_colors_hex": [
+    "#BDBDBD",
+    "#1A1A1A",
+    "#A6D4CC"
+  ],
+  "rois": [
+    {
+      "x": 0.2951,
+      "y": 0.0,
+      "width": 0.3819,
+      "height": 0.9722,
+      "label": "product"
+    },
+    {
+      "x": 0.375,
+      "y": 0.375,
+      "width": 0.2118,
+      "height": 0.4861,
+      "label": "label"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A direct back view of a Bacardi Superior rum bottle on a white surface against a white background.",
+  "challenge_type": null
+}

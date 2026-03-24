@@ -1,0 +1,93 @@
+{
+  "shot_id": "side_right",
+  "image_path": "training/side_right.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7bb/iRhpGGPSKn2nScCgx__NW_side_right.jpg",
+  "category": "training",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle is upright in a right-side view with part of the front label still visible.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "TEXT",
+      "fact": "The main front label remains visible enough to identify the product.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "MATERIAL",
+      "fact": "The bottle is clear glass.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "MATERIAL",
+      "fact": "The silver screw cap shows visible ridged texture.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "MATERIAL",
+      "fact": "A subtle green tint is visible near the base.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "LIGHTING",
+      "fact": "The bottle is photographed on a bright white studio background with soft lighting.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#D4BE98",
+    "#1A1A1A"
+  ],
+  "rois": [
+    {
+      "x": 0.27,
+      "y": 0.04,
+      "width": 0.46,
+      "height": 0.92,
+      "label": "product"
+    },
+    {
+      "x": 0.51,
+      "y": 0.38,
+      "width": 0.24,
+      "height": 0.42,
+      "label": "label"
+    },
+    {
+      "x": 0.52,
+      "y": 0.42,
+      "width": 0.22,
+      "height": 0.1,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A right-side view of a Bacardi Superior rum bottle with part of the front label still visible, on a white surface against a white background.",
+  "challenge_type": null
+}

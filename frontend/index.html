@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Fidelity Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script type="module" src="https://esm.sh/htm@3/preact/standalone"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+    :root {
+      --bg: #0a0a0a; --surface: #141414; --border: #262626;
+      --text: #e5e5e5; --text-dim: #737373; --text-bright: #fafafa;
+      --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-pass { background: #052e16; color: var(--green); border: 1px solid #14532d; }
+    .badge-fail { background: #450a0a; color: var(--red); border: 1px solid #7f1d1d; }
+    .badge-incomplete { background: #451a03; color: var(--amber); border: 1px solid #78350f; }
+    .badge-pending { background: #1a1a1a; color: var(--text-dim); border: 1px solid var(--border); }
+    .badge-running { background: #172554; color: var(--blue); border: 1px solid #1e3a5f; }
+    .grade-badge { font-size: 48px; font-weight: 700; line-height: 1; }
+    .grade-A { color: var(--green); } .grade-B { color: #86efac; }
+    .grade-C { color: var(--amber); } .grade-D { color: #fb923c; } .grade-F { color: var(--red); }
+    .nav-tab { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-dim); transition: all 0.15s; }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--text-bright); border-bottom-color: var(--text-bright); }
+    .fact-row { display: grid; grid-template-columns: 80px 1fr 60px 80px; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .fact-row:last-child { border-bottom: none; }
+    .color-swatch { width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border); display: inline-block; }
+    .slider-container { position: relative; overflow: hidden; cursor: col-resize; }
+    .slider-container img { display: block; width: 100%; }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+    input, select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px; }
+    input:focus, select:focus { outline: none; border-color: var(--text-dim); }
+    button { background: var(--text-bright); color: var(--bg); border: none; padding: 8px 20px; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    import { html, render, useState, useEffect, useRef } from 'https://esm.sh/htm@3/preact/standalone';
+
+    const API = '';
+
+    // --- Utility ---
+    const fetchJSON = async (url) => { const r = await fetch(API + url); return r.json(); };
+    const postJSON = async (url, body) => {
+      const r = await fetch(API + url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      return r.json();
+    };
+
+    // --- Components ---
+
+    function Nav({ view, setView, demoMode, setDemoMode, serverReplay }) {
+      const tabs = [['evaluate','Evaluate'],['report','Report'],['perturbations','Perturbations'],['generate','Generate'],['runs','Runs']];
+      return html`
+        <header class="border-b" style="border-color: var(--border)">
+          <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+            <div class="flex items-center gap-6">
+              <h1 class="text-base font-bold tracking-tight py-3" style="color: var(--text-bright)">Product Fidelity Lab</h1>
+              <div class="flex gap-1">
+                ${tabs.map(([id,label]) => html`
+                  <div class="nav-tab ${view===id?'active':''}" onClick=${()=>setView(id)}>${label}</div>
+                `)}
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              ${demoMode && html`<span class="badge badge-incomplete">replay</span>`}
+              <label class="flex items-center gap-2 text-xs cursor-pointer" style="color: var(--text-dim)">
+                <input type="checkbox" checked=${demoMode} onChange=${e=>setDemoMode(e.target.checked)}
+                  disabled=${serverReplay} class="accent-white" />
+                Demo Mode
+              </label>
+            </div>
+          </div>
+        </header>
+      `;
+    }
+
+    function EvaluateView({ onReport, demoMode }) {
+      if (demoMode) return html`<div class="max-w-2xl mx-auto p-6"><div class="panel p-12 text-center" style="color: var(--text-dim)">Live evaluation unavailable in demo mode. View precomputed runs instead.</div></div>`;
+      const [specs, setSpecs] = useState([]);
+      const [specId, setSpecId] = useState('');
+      const [imageUrl, setImageUrl] = useState('');
+      const [file, setFile] = useState(null);
+      const [inputMode, setInputMode] = useState('url');
+      const [running, setRunning] = useState(false);
+      const [status, setStatus] = useState(null);
+      const [layerStates, setLayerStates] = useState({});
+
+      useEffect(() => { fetchJSON('/api/golden/specs').then(s => { setSpecs(s); if(s.length) setSpecId(s[0].shot_id); }); }, []);
+
+      const run = async () => {
+        setRunning(true); setStatus('submitting');
+        let run_id;
+        if (inputMode === 'upload' && file) {
+          const form = new FormData();
+          form.append('file', file);
+          form.append('spec_id', specId);
+          const r = await fetch('/api/evaluate/upload', { method: 'POST', body: form });
+          ({ run_id } = await r.json());
+        } else {
+          ({ run_id } = await postJSON('/api/evaluate', { image_url: imageUrl, spec_id: specId }));
+        }
+        const poll = setInterval(async () => {
+          const r = await fetchJSON('/api/runs/' + run_id);
+          setStatus(r.status);
+          setLayerStates(r.layer_states || {});
+          if (['complete','failed','interrupted'].includes(r.status)) {
+            clearInterval(poll); setRunning(false);
+            if (r.status === 'complete') onReport(r);
+          }
+        }, 1000);
+      };
+
+      const canRun = specId && (inputMode === 'url' ? imageUrl : file);
+
+      return html`
+        <div class="max-w-2xl mx-auto p-6 space-y-6">
+          <div class="panel p-6 space-y-4">
+            <h2 class="text-sm font-semibold" style="color: var(--text-bright)">Evaluate Image</h2>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--text-dim)">Golden Spec</label>
+                <select value=${specId} onChange=${e=>setSpecId(e.target.value)} class="w-full">
+                  ${specs.map(s => html`<option value=${s.shot_id}>${s.shot_id} — ${s.description}</option>`)}
+                </select>
+              </div>
+              <div class="flex gap-2 text-xs">
+                <button class=${inputMode === 'url' ? '' : 'secondary'} onClick=${()=>setInputMode('url')}>URL</button>
+                <button class=${inputMode === 'upload' ? '' : 'secondary'} onClick=${()=>setInputMode('upload')}>Upload</button>
+              </div>
+              ${inputMode === 'url' ? html`
+                <div>
+                  <label class="block text-xs mb-1" style="color: var(--text-dim)">Image URL</label>
+                  <input type="text" value=${imageUrl} onInput=${e=>setImageUrl(e.target.value)} placeholder="https://..." class="w-full" />
+                </div>
+              ` : html`
+                <div>
+                  <label class="block text-xs mb-1" style="color: var(--text-dim)">Image File</label>
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange=${e => setFile(e.target.files[0] || null)} class="w-full" />
+                  ${file && html`<div class="text-xs mt-1" style="color: var(--text-dim)">${file.name} (${(file.size / 1024).toFixed(0)} KB)</div>`}
+                </div>
+              `}
+              <button onClick=${run} disabled=${running || !canRun}>
+                ${running ? 'Evaluating...' : 'Evaluate'}
+              </button>
+            </div>
+            ${status && html`
+              <div class="mt-4 space-y-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs" style="color: var(--text-dim)">Status:</span>
+                  <span class="badge ${status==='complete'?'badge-pass':status==='failed'?'badge-fail':'badge-running'}">${status}</span>
+                </div>
+                <div class="flex gap-3">
+                  ${Object.entries(layerStates).map(([k,v]) => html`
+                    <div class="flex items-center gap-1 text-xs">
+                      <span style="color: var(--text-dim)">${k}:</span>
+                      <span class="badge ${v==='complete'?'badge-pass':v==='failed'?'badge-fail':'badge-running'}">${v}</span>
+                    </div>
+                  `)}
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function ReportView({ report }) {
+      if (!report) return html`<div class="max-w-4xl mx-auto p-6"><div class="panel p-12 text-center" style="color: var(--text-dim)">No report loaded. Run an evaluation or select a run.</div></div>`;
+      const r = report.result || report;
+      const f = r.final || {};
+      const afv = r.afv || {};
+      const brand = r.brand || {};
+      const depth = r.depth || {};
+
+      return html`
+        <div class="max-w-5xl mx-auto p-6 space-y-6">
+          <!-- Verdict Header -->
+          <div class="panel p-6 flex items-center justify-between">
+            <div class="flex items-center gap-6">
+              ${f.outcome === 'incomplete'
+                ? html`
+                  <div class="grade-badge" style="color: var(--amber)">!</div>
+                  <div>
+                    <div class="text-xl font-bold" style="color: var(--amber)">Incomplete</div>
+                    <div class="badge badge-incomplete mt-1">INCOMPLETE</div>
+                  </div>`
+                : html`
+                  <div class="grade-badge grade-${f.grade || 'F'}">${f.grade || '?'}</div>
+                  <div>
+                    <div class="text-xl font-bold" style="color: var(--text-bright)">${f.overall != null ? (f.overall * 100).toFixed(1) + '%' : '—'}</div>
+                    <div class="badge ${f.passed ? 'badge-pass' : 'badge-fail'} mt-1">${f.passed ? 'PASS' : 'FAIL'}</div>
+                  </div>`
+              }
+            </div>
+            ${f.outcome === 'incomplete' && f.incomplete_reasons?.length > 0 && html`
+              <div class="space-y-1">
+                ${f.incomplete_reasons.map(r => html`<div class="text-xs px-3 py-1 rounded" style="background: #451a03; color: var(--amber)">${r}</div>`)}
+              </div>
+            `}
+            ${f.outcome !== 'incomplete' && f.hard_gate_failures?.length > 0 && html`
+              <div class="space-y-1">
+                ${f.hard_gate_failures.map(hg => html`<div class="text-xs px-3 py-1 rounded" style="background: #450a0a; color: var(--red)">${hg}</div>`)}
+              </div>
+            `}
+          </div>
+
+          <!-- AFV Evidence -->
+          <div class="panel">
+            <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--border)">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold" style="color: var(--text-bright)">Atomic Fact Verification</h3>
+                ${afv.error && html`<span class="badge badge-incomplete">incomplete</span>`}
+              </div>
+              <span class="text-sm font-mono">${!afv.error && afv.score != null ? (afv.score * 100).toFixed(1) + '%' : '—'}</span>
+            </div>
+            ${afv.error && html`<div class="px-4 py-3 text-xs" style="color: var(--amber)">${afv.error}</div>`}
+            <div>
+              ${(afv.verdicts || []).map((v, i) => {
+                const fact = (afv.facts || [])[i] || {};
+                return html`
+                  <div class="fact-row ${fact.critical ? 'border-l-2' : ''}" style="${fact.critical ? 'border-left-color: var(--red)' : ''}">
+                    <span class="badge" style="background: var(--surface); border: 1px solid var(--border); font-size: 10px">${fact.category || '?'}</span>
+                    <span class="text-xs">${fact.fact || v.fact_id}</span>
+                    <span style="color: ${v.verdict ? 'var(--green)' : 'var(--red)'}">${v.verdict ? '\u2713' : '\u2717'}</span>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${(v.confidence||0)*100}%; background: ${v.verdict ? 'var(--green)' : 'var(--red)'}"></div></div>
+                  </div>
+                `;
+              })}
+            </div>
+          </div>
+
+          <!-- Brand Evidence -->
+          <div class="panel">
+            <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--border)">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold" style="color: var(--text-bright)">Brand Integrity</h3>
+                ${brand.error && html`<span class="badge badge-incomplete">incomplete</span>`}
+              </div>
+              <span class="text-sm font-mono">${!brand.error && brand.combined_score != null ? (brand.combined_score * 100).toFixed(1) + '%' : '—'}</span>
+            </div>
+            ${brand.error && html`<div class="px-4 py-3 text-xs" style="color: var(--amber)">${brand.error}</div>`}
+            <div class="p-4 grid grid-cols-2 gap-4">
+              <!-- OCR -->
+              <div>
+                <h4 class="text-xs font-semibold mb-2" style="color: var(--text-dim)">TEXT MATCHING</h4>
+                ${(brand.text_score?.matches || []).map(m => html`
+                  <div class="flex items-center gap-2 mb-1 text-xs">
+                    <span style="color: ${m.matched ? 'var(--green)' : 'var(--red)'}">${m.matched ? '\u2713' : '\u2717'}</span>
+                    <span class="${m.critical ? 'font-bold' : ''}">${m.expected}</span>
+                    <span style="color: var(--text-dim)">${(m.score*100).toFixed(0)}%</span>
+                  </div>
+                `)}
+              </div>
+              <!-- Color -->
+              <div>
+                <h4 class="text-xs font-semibold mb-2" style="color: var(--text-dim)">COLOR FIDELITY</h4>
+                ${(brand.color_score?.pairs || []).map(p => html`
+                  <div class="flex items-center gap-2 mb-2">
+                    <div class="color-swatch" style="background: ${p.brand_hex}"></div>
+                    <span class="text-xs" style="color: var(--text-dim)">\u2192</span>
+                    <div class="color-swatch" style="background: ${p.closest_extracted_hex}"></div>
+                    <span class="text-xs font-mono" style="color: ${p.delta_e < 10 ? 'var(--green)' : p.delta_e < 25 ? 'var(--amber)' : 'var(--red)'}">
+                      \u0394E ${p.delta_e.toFixed(1)}
+                    </span>
+                  </div>
+                `)}
+              </div>
+            </div>
+          </div>
+
+          <!-- Depth (supporting) -->
+          <div class="panel">
+            <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--border)">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold" style="color: var(--text-bright)">Structural Integrity <span class="text-xs font-normal" style="color: var(--text-dim)">(supporting signal)</span></h3>
+                ${depth.error && html`<span class="badge badge-incomplete">incomplete</span>`}
+              </div>
+              <span class="text-sm font-mono">${!depth.error && depth.combined != null ? (depth.combined * 100).toFixed(1) + '%' : '—'}</span>
+            </div>
+            ${depth.error && html`<div class="px-4 py-3 text-xs" style="color: var(--amber)">${depth.error}</div>`}
+            <div class="p-4 flex gap-8 text-xs font-mono">
+              <div><span style="color: var(--text-dim)">SSIM</span> <span class="ml-2">${depth.ssim?.toFixed(3) || '—'}</span></div>
+              <div><span style="color: var(--text-dim)">Correlation</span> <span class="ml-2">${depth.correlation?.toFixed(3) || '—'}</span></div>
+              <div><span style="color: var(--text-dim)">MSE</span> <span class="ml-2">${depth.mse?.toFixed(4) || '—'}</span></div>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="panel p-4 text-xs font-mono" style="color: var(--text-dim)">
+            <div class="flex flex-wrap gap-x-6 gap-y-1">
+              ${Object.entries(r.run_metadata || {}).map(([k,v]) => html`<div><span>${k}:</span> <span style="color: var(--text)">${typeof v === 'object' ? JSON.stringify(v) : v}</span></div>`)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function PerturbationsView() {
+      return html`<div class="max-w-4xl mx-auto p-6"><div class="panel p-12 text-center" style="color: var(--text-dim)">Run perturbation suite from the API to see results here.</div></div>`;
+    }
+
+    function GenerateView({ demoMode }) {
+      if (demoMode) return html`<div class="max-w-2xl mx-auto p-6"><div class="panel p-12 text-center" style="color: var(--text-dim)">Live generation unavailable in demo mode.</div></div>`;
+      const [prompt, setPrompt] = useState('');
+      const [refs, setRefs] = useState('');
+      const [running, setRunning] = useState(false);
+      const [result, setResult] = useState(null);
+
+      const run = async () => {
+        setRunning(true);
+        const refUrls = refs.split('\n').map(s=>s.trim()).filter(Boolean);
+        const { run_id } = await postJSON('/api/generate', { prompt, reference_urls: refUrls });
+        const poll = setInterval(async () => {
+          const r = await fetchJSON('/api/runs/' + run_id);
+          if (['complete','failed'].includes(r.status)) {
+            clearInterval(poll); setRunning(false);
+            if (r.result) setResult(r.result);
+          }
+        }, 2000);
+      };
+
+      return html`
+        <div class="max-w-2xl mx-auto p-6 space-y-6">
+          <div class="panel p-6 space-y-4">
+            <h2 class="text-sm font-semibold" style="color: var(--text-bright)">Generate Image</h2>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--text-dim)">Prompt</label>
+                <input type="text" value=${prompt} onInput=${e=>setPrompt(e.target.value)} placeholder="Product on white sweep..." class="w-full" />
+              </div>
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--text-dim)">Reference URLs (one per line)</label>
+                <textarea value=${refs} onInput=${e=>setRefs(e.target.value)} rows="3" class="w-full" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+              </div>
+              <button onClick=${run} disabled=${running || !prompt}>
+                ${running ? 'Generating...' : 'Generate'}
+              </button>
+            </div>
+            ${result?.image_url && html`
+              <div class="mt-4">
+                <img src=${result.image_url} class="rounded-lg max-w-full" style="border: 1px solid var(--border)" />
+                <div class="mt-2 text-xs font-mono" style="color: var(--text-dim)">
+                  seed: ${result.seed} | ${result.duration_ms}ms | $${result.cost_estimate}
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function RunsView({ onSelectRun, demoMode }) {
+      const [runs, setRuns] = useState([]);
+      useEffect(() => {
+        const endpoint = demoMode ? '/api/replay/runs' : '/api/runs?limit=50';
+        fetchJSON(endpoint).then(setRuns);
+      }, [demoMode]);
+
+      return html`
+        <div class="max-w-4xl mx-auto p-6">
+          <div class="panel">
+            <div class="px-4 py-3 border-b" style="border-color: var(--border)">
+              <h2 class="text-sm font-semibold" style="color: var(--text-bright)">Runs</h2>
+            </div>
+            ${runs.length === 0 && html`<div class="p-8 text-center text-xs" style="color: var(--text-dim)">No runs yet</div>`}
+            ${runs.map(r => {
+              const outcome = r.result?.final?.outcome;
+              const isIncomplete = r.status === 'complete' && outcome === 'incomplete';
+              const typeBadge = isIncomplete ? 'incomplete' : r.status === 'complete' ? (r.passed ? 'pass' : 'fail') : r.status === 'failed' ? 'fail' : 'pending';
+              const statusBadge = isIncomplete ? 'incomplete' : r.status === 'complete' ? 'pass' : r.status === 'failed' ? 'fail' : 'pending';
+              return html`
+                <div class="flex items-center justify-between px-4 py-3 border-b cursor-pointer hover:bg-white/5" style="border-color: var(--border)" onClick=${()=>onSelectRun(r)}>
+                  <div class="flex items-center gap-3">
+                    <span class="badge badge-${typeBadge}">${r.type}</span>
+                    <span class="text-xs font-mono" style="color: var(--text-dim)">${r.id}</span>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    ${isIncomplete
+                      ? html`<span class="text-sm font-bold" style="color: var(--amber)">!</span>`
+                      : r.grade && html`<span class="text-sm font-bold grade-${r.grade}">${r.grade}</span>`
+                    }
+                    ${!isIncomplete && r.score != null && html`<span class="text-xs font-mono">${(r.score*100).toFixed(1)}%</span>`}
+                    <span class="badge badge-${statusBadge}">${isIncomplete ? 'incomplete' : r.status}</span>
+                  </div>
+                </div>
+              `;
+            })}
+          </div>
+        </div>
+      `;
+    }
+
+    function App() {
+      const [view, setView] = useState('runs');
+      const [demoMode, setDemoMode] = useState(false);
+      const [serverMode, setServerMode] = useState(null);
+      const [report, setReport] = useState(null);
+
+      // Detect server mode on mount
+      useEffect(() => {
+        fetchJSON('/api/mode').then(m => {
+          setServerMode(m);
+          if (m.mode === 'replay') { setDemoMode(true); setView('runs'); }
+        });
+      }, []);
+
+      const effectiveDemoMode = demoMode || serverMode?.mode === 'replay';
+
+      const handleReport = (r) => { setReport(r); setView('report'); };
+      const handleSelectRun = (r) => { setReport(r); setView('report'); };
+
+      return html`
+        <${Nav} view=${view} setView=${setView} demoMode=${effectiveDemoMode} setDemoMode=${setDemoMode}
+          serverReplay=${serverMode?.mode === 'replay'} />
+        ${view === 'evaluate' && html`<${EvaluateView} onReport=${handleReport} demoMode=${effectiveDemoMode} />`}
+        ${view === 'report' && html`<${ReportView} report=${report} />`}
+        ${view === 'perturbations' && html`<${PerturbationsView} />`}
+        ${view === 'generate' && html`<${GenerateView} demoMode=${effectiveDemoMode} />`}
+        ${view === 'runs' && html`<${RunsView} onSelectRun=${handleSelectRun} demoMode=${effectiveDemoMode} />`}
+      `;
+    }
+
+    render(html`<${App} />`, document.getElementById('app'));
+  </script>
+</body>
+</html>

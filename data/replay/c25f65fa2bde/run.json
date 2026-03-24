@@ -1,0 +1,275 @@
+{
+  "id": "c25f65fa2bde",
+  "type": "evaluation",
+  "status": "complete",
+  "layer_states": {
+    "afv": "complete",
+    "depth": "complete",
+    "brand": "complete"
+  },
+  "created_at": "2026-03-24 02:05:33.091807",
+  "updated_at": "2026-03-24 02:07:31.129064",
+  "config": {
+    "image_url": "https://v3b.fal.media/files/b/0a936389/WVc16CmaP-5OeiKPOcN7J_qbXOeFfE.jpg",
+    "spec_id": "hero_front_straight",
+    "generation_run_id": "bd70ea412df9",
+    "label": "best_candidate"
+  },
+  "result": {
+    "afv": {
+      "facts": [
+        {
+          "id": "F1",
+          "category": "GEOMETRY",
+          "fact": "The bottle is upright and centered in a clean front-facing hero shot.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F2",
+          "category": "MATERIAL",
+          "fact": "The bottle contains clear, colorless liquid.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F3",
+          "category": "TEXT",
+          "fact": "The main front label is clearly visible on the bottle body.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F4",
+          "category": "LIGHTING",
+          "fact": "The bottle is photographed against a bright white studio background with soft, even lighting.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F5",
+          "category": "MATERIAL",
+          "fact": "The bottle is clear glass with a subtle green tint near the base.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F6",
+          "category": "DETAIL",
+          "fact": "The silver screw cap shows visible ridged texture.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F7",
+          "category": "DETAIL",
+          "fact": "The '1862' embossing is visible on the shoulder of the bottle.",
+          "critical": false,
+          "importance": "medium"
+        }
+      ],
+      "verdicts": [
+        {
+          "fact_id": "F1",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The bottle is positioned upright in the center of the image, facing directly forward, consistent with a clean front-facing hero shot."
+        },
+        {
+          "fact_id": "F2",
+          "verdict": true,
+          "confidence": 0.98,
+          "reasoning": "The liquid inside the bottle appears clear and colorless, aside from the green reflection/tint at the very bottom."
+        },
+        {
+          "fact_id": "F3",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "A large, blank white label is prominently displayed on the front of the bottle body."
+        },
+        {
+          "fact_id": "F4",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The background is bright white, and the lighting is soft and relatively even, creating smooth reflections and shadows typical of studio lighting."
+        },
+        {
+          "fact_id": "F5",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The bottle is made of clear glass, and there is a distinct, subtle green tint visible at the thick glass base."
+        },
+        {
+          "fact_id": "F6",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The cap on the bottle is silver and has clearly visible vertical ridges along its side."
+        },
+        {
+          "fact_id": "F7",
+          "verdict": false,
+          "confidence": 0.99,
+          "reasoning": "There is no visible embossing of '1862' or any other text on the shoulder of the bottle in this image."
+        }
+      ],
+      "score": 0.8888888888888888,
+      "category_breakdown": {
+        "GEOMETRY": 1.0,
+        "MATERIAL": 1.0,
+        "TEXT": 1.0,
+        "LIGHTING": 1.0,
+        "DETAIL": 0.5
+      },
+      "critical_failures": [],
+      "error": null
+    },
+    "depth": {
+      "ssim": 0.7360465312963427,
+      "correlation": 0.6841178586463372,
+      "mse": 0.06402914459745136,
+      "combined": 0.7604527943225822,
+      "roi_used": true,
+      "error": null
+    },
+    "brand": {
+      "text_score": {
+        "matches": [
+          {
+            "expected": "BACARDI",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": true
+          },
+          {
+            "expected": "SUPERIOR",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "ORIGINAL PREMIUM RUM",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "RON CARTA BLANCA",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "CASA FUNDADA EN 1862",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "37.5% vol",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "70cl e",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          }
+        ],
+        "score": 0.0,
+        "critical_failures": [
+          "Brand text missing: \"BACARDI\""
+        ],
+        "extracted_texts": [
+          "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100010001000000000100001000100010001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        ]
+      },
+      "color_score": {
+        "brand_colors_hex": [
+          "#f2ede4",
+          "#1a1a1a",
+          "#a78f56",
+          "#c22026"
+        ],
+        "extracted_colors_hex": [
+          "#fcfcfc",
+          "#71896a",
+          "#bcbfbb",
+          "#e8e8e6",
+          "#1a2b16"
+        ],
+        "pairs": [
+          {
+            "brand_hex": "#f2ede4",
+            "closest_extracted_hex": "#e8e8e6",
+            "delta_e": 3.6482452791344424
+          },
+          {
+            "brand_hex": "#1a1a1a",
+            "closest_extracted_hex": "#1a2b16",
+            "delta_e": 15.512832291578615
+          },
+          {
+            "brand_hex": "#a78f56",
+            "closest_extracted_hex": "#71896a",
+            "delta_e": 18.54226187725687
+          },
+          {
+            "brand_hex": "#c22026",
+            "closest_extracted_hex": "#bcbfbb",
+            "delta_e": 43.44934296346618
+          }
+        ],
+        "score": 0.5942365879428195
+      },
+      "combined_score": 0.3565419527656917,
+      "critical_failures": [
+        "Brand text missing: \"BACARDI\""
+      ],
+      "error": null
+    },
+    "final": {
+      "overall": 0.697075784410353,
+      "grade": "C",
+      "passed": false,
+      "outcome": "graded",
+      "hard_gate_failures": [
+        "Brand text missing: \"BACARDI\""
+      ],
+      "incomplete_reasons": [],
+      "incomplete_layers": [],
+      "breakdown": {
+        "afv": 0.8888888888888888,
+        "depth": 0.7604527943225822,
+        "brand": 0.3565419527656917
+      },
+      "confidence": 1.0
+    },
+    "run_metadata": {
+      "generated_image_url": "https://v3b.fal.media/files/b/0a936389/WVc16CmaP-5OeiKPOcN7J_qbXOeFfE.jpg",
+      "golden_spec_id": "hero_front_straight",
+      "duration_ms": 118032,
+      "grade_thresholds": {
+        "A": 0.8272711389781375,
+        "B": 0.7002100837140799,
+        "C": 0.573149028450022,
+        "D": 0.4460879731859643
+      },
+      "pass_threshold": 0.7002100837140799,
+      "thresholds_source": "data/calibration/thresholds.json"
+    }
+  },
+  "score": 0.697075784410353,
+  "grade": "C",
+  "passed": false,
+  "duration_ms": 118032,
+  "cost": null
+}

@@ -1,0 +1,116 @@
+{
+  "shot_id": "hero_front_right_45",
+  "image_path": "training/hero_front_right_45.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b7/jYORFwPRKLx-Qnh34p8YK_hero_front_right_45.jpg",
+  "category": "training",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle is upright in a front-right three-quarter view.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "TEXT",
+      "fact": "The main front label is clearly visible from this angle.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "MATERIAL",
+      "fact": "Clear liquid is visible inside the bottle.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "MATERIAL",
+      "fact": "The bottle is clear glass with a subtle green tint near the base.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "DETAIL",
+      "fact": "The bat logo is visible on the main label.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "DETAIL",
+      "fact": "The silver screw cap shows visible ridged texture.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F7",
+      "category": "LIGHTING",
+      "fact": "The bottle is photographed on a bright white studio background with soft lighting.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "ORIGINAL PREMIUM RUM",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "RON CARTA BLANCA",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "37.5% VOL RUM",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#1A1A1A",
+    "#C8A951",
+    "#D00000"
+  ],
+  "rois": [
+    {
+      "x": 0.354,
+      "y": 0.038,
+      "width": 0.29,
+      "height": 0.938,
+      "label": "product"
+    },
+    {
+      "x": 0.405,
+      "y": 0.367,
+      "width": 0.208,
+      "height": 0.47,
+      "label": "label"
+    },
+    {
+      "x": 0.493,
+      "y": 0.372,
+      "width": 0.07,
+      "height": 0.08,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A front-right three-quarter hero shot of a Bacardi Superior rum bottle on a white surface against a white background.",
+  "challenge_type": null
+}

@@ -1,0 +1,278 @@
+{
+  "id": "fc924eb3071b",
+  "type": "evaluation",
+  "status": "complete",
+  "layer_states": {
+    "afv": "complete",
+    "depth": "running",
+    "brand": "complete"
+  },
+  "created_at": "2026-03-24 01:49:31.882875",
+  "updated_at": "2026-03-24 01:49:51.046086",
+  "config": {
+    "label": "perturbation_text_removal",
+    "spec_id": "hero_front_straight"
+  },
+  "result": {
+    "afv": {
+      "facts": [
+        {
+          "id": "F1",
+          "category": "GEOMETRY",
+          "fact": "The bottle is upright and centered in a clean front-facing hero shot.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F2",
+          "category": "MATERIAL",
+          "fact": "The bottle contains clear, colorless liquid.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F3",
+          "category": "TEXT",
+          "fact": "The main front label is clearly visible on the bottle body.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F4",
+          "category": "LIGHTING",
+          "fact": "The bottle is photographed against a bright white studio background with soft, even lighting.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F5",
+          "category": "MATERIAL",
+          "fact": "The bottle is clear glass with a subtle green tint near the base.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F6",
+          "category": "DETAIL",
+          "fact": "The silver screw cap shows visible ridged texture.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F7",
+          "category": "DETAIL",
+          "fact": "The '1862' embossing is visible on the shoulder of the bottle.",
+          "critical": false,
+          "importance": "medium"
+        }
+      ],
+      "verdicts": [
+        {
+          "fact_id": "F1",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The bottle is positioned vertically in the center of the frame, facing directly forward in a style typical of product hero shots."
+        },
+        {
+          "fact_id": "F2",
+          "verdict": false,
+          "confidence": 0.95,
+          "reasoning": "The bottle appears to be empty. There is no visible meniscus or liquid line to confirm the presence of clear, colorless liquid."
+        },
+        {
+          "fact_id": "F3",
+          "verdict": false,
+          "confidence": 1.0,
+          "reasoning": "The main front label is obscured by a large, opaque gray rectangle digitally placed over the center of the bottle."
+        },
+        {
+          "fact_id": "F4",
+          "verdict": true,
+          "confidence": 0.98,
+          "reasoning": "The image features a bright white background and soft lighting consistent with studio product photography."
+        },
+        {
+          "fact_id": "F5",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The bottle is made of clear glass, and there is a distinct, subtle green tint visible in the thicker glass at the base."
+        },
+        {
+          "fact_id": "F6",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The screw cap at the top of the bottle is silver/white and clearly displays a ridged texture."
+        },
+        {
+          "fact_id": "F7",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The number '1862' is visibly embossed into the glass on the upper shoulder of the bottle, just above the obscured label area."
+        }
+      ],
+      "score": 0.6666666666666666,
+      "category_breakdown": {
+        "GEOMETRY": 1.0,
+        "MATERIAL": 0.5,
+        "TEXT": 0.0,
+        "LIGHTING": 1.0,
+        "DETAIL": 1.0
+      },
+      "critical_failures": [
+        "Critical fact failed: The bottle contains clear, colorless liquid.",
+        "Critical fact failed: The main front label is clearly visible on the bottle body."
+      ],
+      "error": null
+    },
+    "depth": {
+      "ssim": 0.8975513222513783,
+      "correlation": 0.8247175257806645,
+      "mse": 0.049423167566930125,
+      "combined": 0.8863062853465025,
+      "roi_used": true,
+      "error": null
+    },
+    "brand": {
+      "text_score": {
+        "matches": [
+          {
+            "expected": "BACARDI",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": true
+          },
+          {
+            "expected": "SUPERIOR",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "ORIGINAL PREMIUM RUM",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "RON CARTA BLANCA",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "CASA FUNDADA EN 1862",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "37.5% vol",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "70cl e",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          }
+        ],
+        "score": 0.0,
+        "critical_failures": [
+          "Brand text missing: \"BACARDI\""
+        ],
+        "extracted_texts": [
+          "1862 70 cle"
+        ]
+      },
+      "color_score": {
+        "brand_colors_hex": [
+          "#f2ede4",
+          "#1a1a1a",
+          "#a78f56",
+          "#c22026"
+        ],
+        "extracted_colors_hex": [
+          "#fdfdfe",
+          "#95958a",
+          "#e3e6e5",
+          "#524d45",
+          "#bfc5bd"
+        ],
+        "pairs": [
+          {
+            "brand_hex": "#f2ede4",
+            "closest_extracted_hex": "#e3e6e5",
+            "delta_e": 4.990543034243609
+          },
+          {
+            "brand_hex": "#1a1a1a",
+            "closest_extracted_hex": "#524d45",
+            "delta_e": 17.645022059515682
+          },
+          {
+            "brand_hex": "#a78f56",
+            "closest_extracted_hex": "#95958a",
+            "delta_e": 15.408107688448025
+          },
+          {
+            "brand_hex": "#c22026",
+            "closest_extracted_hex": "#524d45",
+            "delta_e": 29.027125665749402
+          }
+        ],
+        "score": 0.6646460077602164
+      },
+      "combined_score": 0.39878760465612983,
+      "critical_failures": [
+        "Brand text missing: \"BACARDI\""
+      ],
+      "error": null
+    },
+    "final": {
+      "overall": 0.6412128527334645,
+      "grade": "C",
+      "passed": false,
+      "outcome": "graded",
+      "hard_gate_failures": [
+        "Critical fact failed: The bottle contains clear, colorless liquid.",
+        "Critical fact failed: The main front label is clearly visible on the bottle body.",
+        "Brand text missing: \"BACARDI\""
+      ],
+      "incomplete_reasons": [],
+      "incomplete_layers": [],
+      "breakdown": {
+        "afv": 0.6666666666666666,
+        "depth": 0.8863062853465025,
+        "brand": 0.39878760465612983
+      },
+      "confidence": 1.0
+    },
+    "run_metadata": {
+      "generated_image_url": "https://v3b.fal.media/files/b/0a9361db/mULXzGDCX7o-_KL6AW__w_text_removal.png",
+      "golden_spec_id": "hero_front_straight",
+      "duration_ms": 19160,
+      "grade_thresholds": {
+        "A": 0.8272711389781375,
+        "B": 0.7002100837140799,
+        "C": 0.573149028450022,
+        "D": 0.4460879731859643
+      },
+      "pass_threshold": 0.7002100837140799,
+      "thresholds_source": "data/calibration/thresholds.json"
+    }
+  },
+  "score": 0.6412128527334645,
+  "grade": "C",
+  "passed": false,
+  "duration_ms": 19160,
+  "cost": null
+}

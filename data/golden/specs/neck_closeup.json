@@ -1,0 +1,84 @@
+{
+  "shot_id": "neck_closeup",
+  "image_path": "training/neck_closeup.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b9/T0FQFvQ-9n_N3KCSzrc8D_neck_closeup.jpg",
+  "category": "training",
+  "shot_type": "detail",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The shot shows the bottle shoulder and lower neck in close-up.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "DETAIL",
+      "fact": "The '1862' embossing is clearly visible on the shoulder.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "MATERIAL",
+      "fact": "The glass is clear and shows realistic refraction and reflection.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "DETAIL",
+      "fact": "The '1862' embossing appears sharp.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F5",
+      "category": "MATERIAL",
+      "fact": "The liquid surface is visible below the embossing.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "DETAIL",
+      "fact": "Partial neck-band detail is visible near the top of frame.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F7",
+      "category": "DETAIL",
+      "fact": "Part of the circular bat-logo label is visible lower in frame.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F8",
+      "category": "LIGHTING",
+      "fact": "The bottle is photographed against a white background with soft lighting.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [],
+  "brand_colors_hex": [
+    "#141414",
+    "#C1A554",
+    "#7D0F0F",
+    "#27130B"
+  ],
+  "rois": [
+    {
+      "x": 0.1,
+      "y": 0.0,
+      "width": 0.8,
+      "height": 1.0,
+      "label": "product"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A close-up of the shoulder and lower neck of a Bacardi Superior rum bottle against a white background.",
+  "challenge_type": null
+}

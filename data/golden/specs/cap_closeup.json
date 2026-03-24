@@ -1,0 +1,77 @@
+{
+  "shot_id": "cap_closeup",
+  "image_path": "training/cap_closeup.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b1/8-J9_FRTqTVnlVWoCNMEq_cap_closeup.jpg",
+  "category": "training",
+  "shot_type": "detail",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "MATERIAL",
+      "fact": "The silver screw cap is the primary subject of the frame.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "DETAIL",
+      "fact": "The cap ridges and texture are clearly visible.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "MATERIAL",
+      "fact": "The cap and neck-band materials are visually distinct.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "DETAIL",
+      "fact": "A black-and-gold neck band is visible below the cap.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "TEXT",
+      "fact": "Script branding on the neck band is partially visible.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "LIGHTING",
+      "fact": "The cap is photographed against a bright white background with soft lighting.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [],
+  "brand_colors_hex": [
+    "#9e9e9e",
+    "#000000",
+    "#c8a951",
+    "#ffffff"
+  ],
+  "rois": [
+    {
+      "x": 0.25,
+      "y": 0.0,
+      "width": 0.5,
+      "height": 1.0,
+      "label": "product"
+    },
+    {
+      "x": 0.29,
+      "y": 0.38,
+      "width": 0.42,
+      "height": 0.51,
+      "label": "label"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A close-up of the cap and neck band of a Bacardi Superior rum bottle against a white background.",
+  "challenge_type": null
+}

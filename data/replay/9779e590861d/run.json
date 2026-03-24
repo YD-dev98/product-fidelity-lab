@@ -1,0 +1,261 @@
+{
+  "id": "9779e590861d",
+  "type": "evaluation",
+  "status": "complete",
+  "config": {
+    "image_url": "https://v3b.fal.media/files/b/0a9361b0/tlyEZ26G3-M7zXfbbSH5b_jjvWG1nV.jpg",
+    "spec_id": "hero_front_left_45",
+    "label": "obvious_fail",
+    "generation_seed": 1043556749
+  },
+  "result": {
+    "afv": {
+      "facts": [
+        {
+          "id": "F1",
+          "category": "GEOMETRY",
+          "fact": "A single Bacardi bottle is shown upright in a front-left three-quarter view.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F2",
+          "category": "TEXT",
+          "fact": "The main front label remains clearly visible from this angle.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F3",
+          "category": "LIGHTING",
+          "fact": "The bottle is photographed on a bright white studio background with soft lighting.",
+          "critical": true,
+          "importance": "high"
+        },
+        {
+          "id": "F4",
+          "category": "MATERIAL",
+          "fact": "The bottle is clear glass with a faint green tint near the base.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F5",
+          "category": "DETAIL",
+          "fact": "The silver screw cap shows visible ridged texture.",
+          "critical": false,
+          "importance": "medium"
+        },
+        {
+          "id": "F6",
+          "category": "DETAIL",
+          "fact": "The '1862' embossing is visible on the shoulder.",
+          "critical": false,
+          "importance": "medium"
+        }
+      ],
+      "verdicts": [
+        {
+          "fact_id": "F1",
+          "verdict": false,
+          "confidence": 0.95,
+          "reasoning": "The bottle is not identifiable as a Bacardi bottle, and it is shown in a front-right three-quarter view, not a front-left three-quarter view. The label has 'FRONT' written on it, suggesting a generic placeholder."
+        },
+        {
+          "fact_id": "F2",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The main white label on the front of the bottle is clearly visible, and the word 'FRONT' printed on it is easily readable from this angle."
+        },
+        {
+          "fact_id": "F3",
+          "verdict": true,
+          "confidence": 0.95,
+          "reasoning": "The bottle is placed on a uniformly bright white surface and against a bright white background. The shadows cast by the bottle are diffused and not harsh, indicating soft lighting conditions typical of a studio setup."
+        },
+        {
+          "fact_id": "F4",
+          "verdict": false,
+          "confidence": 0.9,
+          "reasoning": "The bottle itself is made of clear glass. The green color visible near the base is due to the green liquid contained within the bottle, not an inherent green tint of the glass material itself."
+        },
+        {
+          "fact_id": "F5",
+          "verdict": true,
+          "confidence": 0.99,
+          "reasoning": "The silver screw cap on top of the bottle clearly displays vertical ridged texture around its circumference, designed for grip."
+        },
+        {
+          "fact_id": "F6",
+          "verdict": false,
+          "confidence": 0.99,
+          "reasoning": "There is no visible '1862' embossing or any other text or numbers on the shoulder of the bottle. The shoulder appears smooth and reflects light, but no such details are present."
+        }
+      ],
+      "score": 0.5333333333333333,
+      "category_breakdown": {
+        "GEOMETRY": 0.0,
+        "TEXT": 1.0,
+        "LIGHTING": 1.0,
+        "MATERIAL": 0.0,
+        "DETAIL": 0.5
+      },
+      "critical_failures": [
+        "Critical fact failed: A single Bacardi bottle is shown upright in a front-left three-quarter view."
+      ],
+      "error": null
+    },
+    "depth": {
+      "ssim": 0.730032219457416,
+      "correlation": 0.5007559667947596,
+      "mse": 0.09540267192830203,
+      "combined": 0.6961623653814755,
+      "roi_used": true,
+      "error": null
+    },
+    "brand": {
+      "text_score": {
+        "matches": [
+          {
+            "expected": "BACARDI",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": true
+          },
+          {
+            "expected": "SUPERIOR",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "ORIGINAL PREMIUM RUM",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "RON CARTA BLANCA",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "FUNDADA EN 1862",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          },
+          {
+            "expected": "70cl e",
+            "matched": false,
+            "score": 0.0,
+            "match_mode": "exact_token",
+            "critical": false
+          }
+        ],
+        "score": 0.0,
+        "critical_failures": [
+          "Brand text missing: \"BACARDI\""
+        ],
+        "extracted_texts": [
+          "FRONT"
+        ]
+      },
+      "color_score": {
+        "brand_colors_hex": [
+          "#F2F0E3",
+          "#0C0C0C",
+          "#B08C4F",
+          "#7E1413",
+          "#BCC2C6"
+        ],
+        "extracted_colors_hex": [
+          "#f4f3f4",
+          "#132710",
+          "#9bb097",
+          "#c7c8c5",
+          "#5a7c54"
+        ],
+        "pairs": [
+          {
+            "brand_hex": "#F2F0E3",
+            "closest_extracted_hex": "#f4f3f4",
+            "delta_e": 7.173121930042847
+          },
+          {
+            "brand_hex": "#0C0C0C",
+            "closest_extracted_hex": "#132710",
+            "delta_e": 17.05553937581085
+          },
+          {
+            "brand_hex": "#B08C4F",
+            "closest_extracted_hex": "#9bb097",
+            "delta_e": 22.701316649356336
+          },
+          {
+            "brand_hex": "#7E1413",
+            "closest_extracted_hex": "#132710",
+            "delta_e": 41.56195186316955
+          },
+          {
+            "brand_hex": "#BCC2C6",
+            "closest_extracted_hex": "#c7c8c5",
+            "delta_e": 4.060531141138152
+          }
+        ],
+        "score": 0.629790156161929
+      },
+      "combined_score": 0.3778740936971574,
+      "critical_failures": [
+        "Brand text missing: \"BACARDI\""
+      ],
+      "error": null
+    },
+    "final": {
+      "overall": 0.5274028194545161,
+      "grade": "D",
+      "passed": false,
+      "outcome": "graded",
+      "hard_gate_failures": [
+        "Critical fact failed: A single Bacardi bottle is shown upright in a front-left three-quarter view.",
+        "Brand text missing: \"BACARDI\""
+      ],
+      "incomplete_reasons": [],
+      "incomplete_layers": [],
+      "breakdown": {
+        "afv": 0.5333333333333333,
+        "depth": 0.6961623653814755,
+        "brand": 0.3778740936971574
+      },
+      "confidence": 1.0
+    },
+    "run_metadata": {
+      "generated_image_url": "https://v3b.fal.media/files/b/0a9361b0/tlyEZ26G3-M7zXfbbSH5b_jjvWG1nV.jpg",
+      "golden_spec_id": "hero_front_left_45",
+      "duration_ms": 9484,
+      "grade_thresholds": {
+        "A": 0.8272711389781375,
+        "B": 0.7002100837140799,
+        "C": 0.573149028450022,
+        "D": 0.4460879731859643
+      },
+      "pass_threshold": 0.7002100837140799,
+      "thresholds_source": "data/calibration/thresholds.json"
+    }
+  },
+  "score": 0.5274028194545161,
+  "grade": "D",
+  "passed": false,
+  "duration_ms": 9491,
+  "layer_states": {
+    "afv": "complete",
+    "depth": "complete",
+    "brand": "complete"
+  }
+}

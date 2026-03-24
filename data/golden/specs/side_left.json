@@ -1,0 +1,70 @@
+{
+  "shot_id": "side_left",
+  "image_path": "training/side_left.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7ba/TslhdFmWveogJ510Y77Vb_side_left.jpg",
+  "category": "training",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle is upright in a left-side view with the front turning away from the camera.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "GEOMETRY",
+      "fact": "The bottle silhouette and main form are clearly visible against the background.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "MATERIAL",
+      "fact": "The bottle is clear glass.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "MATERIAL",
+      "fact": "A subtle green tint is visible near the base.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "DETAIL",
+      "fact": "The liquid level is visible below the shoulder.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "LIGHTING",
+      "fact": "The bottle is photographed on a bright white studio background with soft lighting.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [],
+  "brand_colors_hex": [
+    "#e8e6df",
+    "#c8a951",
+    "#c0c0c0",
+    "#1a1a1a"
+  ],
+  "rois": [
+    {
+      "x": 0.29,
+      "y": 0.0,
+      "width": 0.43,
+      "height": 1.0,
+      "label": "product"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A left-side view of a Bacardi Superior rum bottle on a white surface against a white background.",
+  "challenge_type": null
+}

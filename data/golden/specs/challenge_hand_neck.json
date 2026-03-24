@@ -1,0 +1,104 @@
+{
+  "shot_id": "challenge_hand_neck",
+  "image_path": "validation/challenge_hand_neck.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b3/xTMb81c5EvS_QZY9WZEzb_challenge_hand_neck.jpg",
+  "category": "validation",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle remains the clear primary subject of the image.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "TEXT",
+      "fact": "The main front label remains visible.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "GEOMETRY",
+      "fact": "A hand grips the neck and upper portion of the bottle.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F4",
+      "category": "GEOMETRY",
+      "fact": "The bottle is slightly tilted rather than perfectly vertical.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "MATERIAL",
+      "fact": "The silver cap and clear glass body remain visible.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "DETAIL",
+      "fact": "The bat logo remains visible on the main label.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "ORIGINAL PREMIUM RUM",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "RON CARTA BLANCA",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#D5AF3C",
+    "#1A1A1A",
+    "#A01F08"
+  ],
+  "rois": [
+    {
+      "x": 0.37,
+      "y": 0.13,
+      "width": 0.28,
+      "height": 0.83,
+      "label": "product"
+    },
+    {
+      "x": 0.41,
+      "y": 0.49,
+      "width": 0.2,
+      "height": 0.27,
+      "label": "label"
+    },
+    {
+      "x": 0.47,
+      "y": 0.44,
+      "width": 0.1,
+      "height": 0.05,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A hero shot of a Bacardi Superior rum bottle with a hand gripping the neck, on a white surface against a white background.",
+  "challenge_type": "hand_occlusion"
+}

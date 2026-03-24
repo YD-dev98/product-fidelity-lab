@@ -1,0 +1,127 @@
+{
+  "shot_id": "hero_front_straight",
+  "image_path": "training/hero_front_straight.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b8/ExmqykKU9nG45uRucQ4W8_hero_front_straight.jpg",
+  "category": "training",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle is upright and centered in a clean front-facing hero shot.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "MATERIAL",
+      "fact": "The bottle contains clear, colorless liquid.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "TEXT",
+      "fact": "The main front label is clearly visible on the bottle body.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "LIGHTING",
+      "fact": "The bottle is photographed against a bright white studio background with soft, even lighting.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F5",
+      "category": "MATERIAL",
+      "fact": "The bottle is clear glass with a subtle green tint near the base.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "DETAIL",
+      "fact": "The silver screw cap shows visible ridged texture.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F7",
+      "category": "DETAIL",
+      "fact": "The '1862' embossing is visible on the shoulder of the bottle.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "ORIGINAL PREMIUM RUM",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "RON CARTA BLANCA",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "CASA FUNDADA EN 1862",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "37.5% vol",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "70cl e",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#f2ede4",
+    "#1a1a1a",
+    "#a78f56",
+    "#c22026"
+  ],
+  "rois": [
+    {
+      "x": 0.29,
+      "y": 0.04,
+      "width": 0.42,
+      "height": 0.91,
+      "label": "product"
+    },
+    {
+      "x": 0.35,
+      "y": 0.4,
+      "width": 0.3,
+      "height": 0.39,
+      "label": "label"
+    },
+    {
+      "x": 0.44,
+      "y": 0.38,
+      "width": 0.12,
+      "height": 0.08,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A clean front-facing hero shot of a Bacardi Superior rum bottle on a white surface against a white background.",
+  "challenge_type": null
+}

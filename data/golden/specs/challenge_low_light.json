@@ -1,0 +1,105 @@
+{
+  "shot_id": "challenge_low_light",
+  "image_path": "validation/challenge_low_light.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b4/QKM-JU3Mer2scz55WAlwF_challenge_low_light.jpg",
+  "category": "validation",
+  "shot_type": "hero",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The bottle remains upright and clearly identifiable in a front hero view.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "TEXT",
+      "fact": "The main front label remains visible.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "LIGHTING",
+      "fact": "The shot is visibly darker than the clean hero reference while remaining usable.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F4",
+      "category": "MATERIAL",
+      "fact": "The bottle is clear glass with a subtle green tint near the base.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F5",
+      "category": "DETAIL",
+      "fact": "The bat logo remains visible on the main label.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "LIGHTING",
+      "fact": "The bottle is still photographed in a white studio setup.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [
+    {
+      "text": "BACARDI",
+      "critical": true,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "SUPERIOR",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "ORIGINAL PREMIUM RUM",
+      "critical": false,
+      "match_mode": "exact_token"
+    },
+    {
+      "text": "RON CARTA BLANCA",
+      "critical": false,
+      "match_mode": "exact_token"
+    }
+  ],
+  "brand_colors_hex": [
+    "#C8A951",
+    "#8B0000",
+    "#1A1A1A",
+    "#F5EFEB"
+  ],
+  "rois": [
+    {
+      "x": 0.297,
+      "y": 0.007,
+      "width": 0.406,
+      "height": 0.985,
+      "label": "product"
+    },
+    {
+      "x": 0.334,
+      "y": 0.338,
+      "width": 0.332,
+      "height": 0.493,
+      "label": "label"
+    },
+    {
+      "x": 0.369,
+      "y": 0.347,
+      "width": 0.091,
+      "height": 0.082,
+      "label": "logo"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A lower-light hero shot of a Bacardi Superior rum bottle on a white surface against a white background.",
+  "challenge_type": "low_light"
+}

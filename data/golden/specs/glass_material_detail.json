@@ -1,0 +1,84 @@
+{
+  "shot_id": "glass_material_detail",
+  "image_path": "training/glass_material_detail.jpg",
+  "image_url": "https://v3b.fal.media/files/b/0a92d7b5/z3qXRn8SgHezcIAGOqV9f_glass_material_detail.jpg",
+  "category": "training",
+  "shot_type": "detail",
+  "atomic_facts": [
+    {
+      "id": "F1",
+      "category": "GEOMETRY",
+      "fact": "The shot focuses on the lower section of the bottle.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F2",
+      "category": "MATERIAL",
+      "fact": "The glass material is clearly visible and translucent.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F3",
+      "category": "COLOR",
+      "fact": "A subtle green tint is visible near the base.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F4",
+      "category": "LIGHTING",
+      "fact": "Reflections and highlights support a realistic glass appearance.",
+      "critical": true,
+      "importance": "high"
+    },
+    {
+      "id": "F5",
+      "category": "DETAIL",
+      "fact": "The lower edge of the label is partially visible.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F6",
+      "category": "DETAIL",
+      "fact": "Molded or embossed glass detail is visible near the base.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F7",
+      "category": "CONTEXT",
+      "fact": "White background context remains visible around the bottle.",
+      "critical": false,
+      "importance": "medium"
+    },
+    {
+      "id": "F8",
+      "category": "GEOMETRY",
+      "fact": "The bottle body widens toward the base.",
+      "critical": false,
+      "importance": "medium"
+    }
+  ],
+  "expected_texts": [],
+  "brand_colors_hex": [
+    "#C8A951",
+    "#1A1A1A",
+    "#FDF9F0",
+    "#C9E5DB"
+  ],
+  "rois": [
+    {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0,
+      "label": "product"
+    }
+  ],
+  "spec_version": 2,
+  "description": "A close-up of the lower glass body and base of a Bacardi Superior rum bottle against a white background.",
+  "challenge_type": null
+}
