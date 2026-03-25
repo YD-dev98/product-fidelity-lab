@@ -136,6 +136,104 @@
       const r = await fetch(API + url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
       return r.json();
     };
+    const tokenize = (text) => (text.toLowerCase().match(/\b\w+\b/g) || []);
+    const levenshtein = (a, b) => {
+      const rows = a.length + 1;
+      const cols = b.length + 1;
+      const dp = Array.from({ length: rows }, () => Array(cols).fill(0));
+      for (let i = 0; i < rows; i += 1) dp[i][0] = i;
+      for (let j = 0; j < cols; j += 1) dp[0][j] = j;
+      for (let i = 1; i < rows; i += 1) {
+        for (let j = 1; j < cols; j += 1) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost,
+          );
+        }
+      }
+      return dp[a.length][b.length];
+    };
+    const phraseSimilarity = (a, b) => {
+      if (!a && !b) return 1;
+      const longest = Math.max(a.length, b.length);
+      if (longest === 0) return 1;
+      return 1 - (levenshtein(a, b) / longest);
+    };
+    const getTextMatchDiagnostic = (match, extractedTexts = []) => {
+      if (!match || match.matched) return { kind: 'exact' };
+      if (match.match_mode !== 'exact_token') {
+        return { kind: match.score >= 0.6 ? 'near_miss' : 'miss', similarity: match.score };
+      }
+
+      const expectedTokens = tokenize(match.expected);
+      const ocrTokens = tokenize((extractedTexts || []).join(' '));
+      if (!expectedTokens.length || !ocrTokens.length) return { kind: 'miss' };
+
+      const windowSize = expectedTokens.length;
+      let bestPhrase = '';
+      let bestSimilarity = 0;
+
+      if (ocrTokens.length < windowSize) {
+        bestPhrase = ocrTokens.join(' ');
+        bestSimilarity = phraseSimilarity(expectedTokens.join(' '), bestPhrase);
+      } else {
+        for (let i = 0; i <= ocrTokens.length - windowSize; i += 1) {
+          const candidate = ocrTokens.slice(i, i + windowSize).join(' ');
+          const similarity = phraseSimilarity(expectedTokens.join(' '), candidate);
+          if (similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            bestPhrase = candidate;
+          }
+        }
+      }
+
+      return {
+        kind: bestSimilarity >= 0.75 ? 'near_miss' : 'miss',
+        phrase: bestPhrase,
+        similarity: bestSimilarity,
+      };
+    };
+    const formatScore = (value, digits = 3) => (value != null ? value.toFixed(digits) : '—');
+    const formatPercent = (value, digits = 1) => (value != null ? `${(value * 100).toFixed(digits)}%` : '—');
+    const readableRef = (value) => {
+      if (!value) return '—';
+      if (!value.startsWith('http')) return value;
+      const match = value.match(/_([A-Za-z0-9_]+)\.(jpg|png|webp)$/);
+      if (match) return match[1];
+      return value.split('/').pop() || value;
+    };
+    const getReferenceList = (config = {}) => {
+      const refs = config.reference_shot_ids || config.edit_reference_order || [];
+      return refs.map(readableRef);
+    };
+    const getShowcaseContext = (report) => {
+      if (!report?.id) return null;
+      const deltaOverall = SHOWCASE.remediation.overall - SHOWCASE.baseline.overall;
+      const deltaText = SHOWCASE.remediation.text - SHOWCASE.baseline.text;
+      if (report.id === SHOWCASE.baselineReplayId) {
+        return {
+          role: 'Strict baseline failure',
+          summary: 'One-shot generation under the strict benchmark. Graded B on weighted score, but fails the publish gate on missing critical brand text.',
+          deltaOverall,
+          deltaText,
+          metricLabelOverall: 'Remediation lift',
+          metricLabelText: 'Text lift available',
+        };
+      }
+      if (report.id === SHOWCASE.strictEditReplayId) {
+        return {
+          role: 'Strict edit remediation',
+          summary: 'Constrained repair using only strict-allowed references. This is the final clean B pass in the showcase flow.',
+          deltaOverall,
+          deltaText,
+          metricLabelOverall: 'Overall Δ vs baseline',
+          metricLabelText: 'Text Δ vs baseline',
+        };
+      }
+      return null;
+    };
 
     // --- Components ---
 
@@ -396,16 +494,213 @@
       `;
     }
 
-    function ReportView({ report }) {
-      if (!report) return html`<div class="max-w-4xl mx-auto p-6"><div class="panel p-12 text-center" style="color: var(--text-dim)">No report loaded. Run an evaluation or select a run.</div></div>`;
+    function ReportView({ report, openReplay, goShowcase }) {
+      if (!report) return html`
+        <div class="max-w-4xl mx-auto p-6">
+          <div class="panel p-8 space-y-4 text-center">
+            <div class="text-sm" style="color: var(--text-dim)">No report loaded yet.</div>
+            <div class="text-xs leading-6" style="color: var(--text-dim)">
+              Open one of the curated strict benchmark reports or return to the showcase overview.
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <button onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Open Strict Edit</button>
+              <button class="secondary" onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Open Strict Baseline</button>
+              <button class="secondary" onClick=${goShowcase}>Back to Showcase</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const config = report.config || {};
+      const spec = report.spec || {};
       const r = report.result || report;
       const f = r.final || {};
       const afv = r.afv || {};
       const brand = r.brand || {};
       const depth = r.depth || {};
+      const extractedTexts = brand.text_score?.extracted_texts || [];
+      const runMetadata = r.run_metadata || {};
+      const candidateImageUrl = config.image_url || runMetadata.generated_image_url || null;
+      const targetImageUrl = spec.image_url || null;
+      const gradeThresholds = runMetadata.grade_thresholds || {};
+      const referenceList = getReferenceList(config);
+      const showcaseContext = getShowcaseContext(report);
+      const hardGateCount = f.hard_gate_failures?.length || 0;
+      const passesWeightedThreshold = (f.overall != null && runMetadata.pass_threshold != null)
+        ? f.overall >= runMetadata.pass_threshold
+        : null;
+      const decisionSummary = f.outcome === 'incomplete'
+        ? 'This run is incomplete, so no final pass/fail decision was issued.'
+        : f.passed
+          ? 'This run clears both the weighted threshold and the hard-gate publish checks.'
+          : hardGateCount > 0 && passesWeightedThreshold
+            ? 'The weighted score is high enough, but the run still fails because at least one hard gate fired.'
+            : 'The run fails because the weighted score does not clear the calibrated pass threshold.';
+      const breakdownRows = [
+        { key: 'afv', label: 'AFV', score: f.breakdown?.afv, weight: 0.45 },
+        { key: 'brand', label: 'Brand', score: f.breakdown?.brand, weight: 0.30 },
+        { key: 'depth', label: 'Depth', score: f.breakdown?.depth, weight: 0.25 },
+      ];
 
       return html`
         <div class="max-w-5xl mx-auto p-6 space-y-6">
+          <div class="panel p-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="text-xs uppercase tracking-[0.12em]" style="color: var(--text-dim)">Report Navigation</div>
+              <div class="text-sm mt-1" style="color: var(--text)">
+                Switch between the two curated strict benchmark reports or return to the showcase.
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Strict Edit</button>
+              <button class="secondary" onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Strict Baseline</button>
+              <button class="secondary" onClick=${goShowcase}>Back to Showcase</button>
+            </div>
+          </div>
+
+          ${(candidateImageUrl || targetImageUrl) && html`
+            <div class="grid lg:grid-cols-2 gap-6">
+              ${candidateImageUrl && html`
+                <div class="panel overflow-hidden">
+                  <div class="px-4 py-3 border-b" style="border-color: var(--border)">
+                    <div class="text-sm font-semibold" style="color: var(--text-bright)">Evaluated Candidate</div>
+                    <div class="text-xs mt-1" style="color: var(--text-dim)">${config.label || config.note || 'Current run input'}</div>
+                  </div>
+                  <img src=${candidateImageUrl} alt="Evaluated candidate" class="w-full" />
+                </div>
+              `}
+              ${targetImageUrl && html`
+                <div class="panel overflow-hidden">
+                  <div class="px-4 py-3 border-b" style="border-color: var(--border)">
+                    <div class="text-sm font-semibold" style="color: var(--text-bright)">Golden Target</div>
+                    <div class="text-xs mt-1" style="color: var(--text-dim)">${spec.shot_id || config.spec_id || 'Reference target'}</div>
+                  </div>
+                  <img src=${targetImageUrl} alt="Golden target" class="w-full" />
+                </div>
+              `}
+            </div>
+          `}
+
+          <div class="grid lg:grid-cols-2 gap-6">
+            <div class="panel p-6 space-y-4">
+              <div>
+                <div class="text-sm font-semibold" style="color: var(--text-bright)">Why This Verdict</div>
+                <div class="text-xs mt-1 leading-6" style="color: var(--text-dim)">
+                  Pass requires <span class="mono">overall ≥ ${formatScore(runMetadata.pass_threshold, 3)}</span> and no hard-gate failures.
+                </div>
+              </div>
+              <div class="panel p-4 text-xs leading-6" style="color: var(--text)">
+                ${decisionSummary}
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Overall</div>
+                  <div class="mt-1 text-lg" style="color: var(--text-bright)">${formatScore(f.overall, 3)}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Pass Threshold</div>
+                  <div class="mt-1 text-lg" style="color: var(--text-bright)">${formatScore(runMetadata.pass_threshold, 3)}</div>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Hard Gates</div>
+                  <div class="mt-1 text-lg" style="color: ${hardGateCount === 0 ? 'var(--green)' : 'var(--red)'}">${hardGateCount}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Weighted Threshold</div>
+                  <div class="mt-1 text-lg" style="color: ${passesWeightedThreshold ? 'var(--green)' : 'var(--red)'}">
+                    ${passesWeightedThreshold == null ? '—' : passesWeightedThreshold ? 'PASS' : 'FAIL'}
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-3">
+                ${breakdownRows.map((row) => html`
+                  <div>
+                    <div class="flex items-center justify-between text-xs">
+                      <span style="color: var(--text-bright)">${row.label}</span>
+                      <span class="font-mono" style="color: var(--text-dim)">
+                        ${formatScore(row.score, 3)} × ${Math.round(row.weight * 100)}%
+                      </span>
+                    </div>
+                    <div class="progress-bar mt-2">
+                      <div class="progress-fill" style="width: ${Math.max(0, Math.min(100, (row.score || 0) * 100))}%; background: ${row.key === 'brand' ? 'var(--amber)' : row.key === 'depth' ? 'var(--blue)' : 'var(--green)'}"></div>
+                    </div>
+                  </div>
+                `)}
+              </div>
+              <div class="flex flex-wrap gap-2 text-[11px]">
+                ${Object.entries(gradeThresholds).map(([grade, threshold]) => html`
+                  <div class="px-3 py-2 rounded panel">
+                    <span style="color: var(--text-dim)">${grade}</span>
+                    <span class="ml-2 font-mono" style="color: var(--text)">${formatScore(threshold, 3)}</span>
+                  </div>
+                `)}
+              </div>
+            </div>
+
+            <div class="panel p-6 space-y-4">
+              <div>
+                <div class="text-sm font-semibold" style="color: var(--text-bright)">Benchmark Context</div>
+                <div class="text-xs mt-1 leading-6" style="color: var(--text-dim)">
+                  Provenance for this run and the exact protocol context behind the evaluator output.
+                </div>
+              </div>
+              ${showcaseContext && html`
+                <div class="panel p-4">
+                  <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">Showcase role</div>
+                  <div class="text-sm mt-2" style="color: var(--text-bright)">${showcaseContext.role}</div>
+                  <div class="text-xs mt-2 leading-6" style="color: var(--text-dim)">${showcaseContext.summary}</div>
+                  <div class="grid grid-cols-2 gap-3 mt-4 text-xs font-mono">
+                    <div class="panel p-3">
+                      <div style="color: var(--text-dim)">${showcaseContext.metricLabelOverall}</div>
+                      <div class="mt-1 text-lg" style="color: ${showcaseContext.deltaOverall >= 0 ? 'var(--green)' : 'var(--red)'}">
+                        ${showcaseContext.deltaOverall >= 0 ? '+' : ''}${showcaseContext.deltaOverall.toFixed(3)}
+                      </div>
+                    </div>
+                    <div class="panel p-3">
+                      <div style="color: var(--text-dim)">${showcaseContext.metricLabelText}</div>
+                      <div class="mt-1 text-lg" style="color: ${showcaseContext.deltaText >= 0 ? 'var(--green)' : 'var(--red)'}">
+                        ${showcaseContext.deltaText >= 0 ? '+' : ''}${showcaseContext.deltaText.toFixed(3)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `}
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Benchmark</div>
+                  <div class="mt-1 font-mono" style="color: var(--text)">${config.benchmark || '—'}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Target</div>
+                  <div class="mt-1 font-mono" style="color: var(--text)">${config.spec_id || spec.shot_id || '—'}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Source Experiment</div>
+                  <div class="mt-1 font-mono" style="color: var(--text)">${config.source_experiment || '—'}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Variant</div>
+                  <div class="mt-1 font-mono" style="color: var(--text)">${config.prompt_variant || config.prompt_strategy || '—'}</div>
+                </div>
+              </div>
+              ${config.base_candidate && html`
+                <div class="panel p-3 text-xs">
+                  <div style="color: var(--text-dim)">Base Candidate</div>
+                  <div class="mt-1 font-mono" style="color: var(--text)">${config.base_candidate}</div>
+                </div>
+              `}
+              ${referenceList.length > 0 && html`
+                <div>
+                  <div class="text-[11px] uppercase tracking-[0.12em] mb-2" style="color: var(--text-dim)">References Used</div>
+                  <div class="flex flex-wrap gap-2">
+                    ${referenceList.map((ref) => html`<div class="px-3 py-2 rounded panel text-xs font-mono">${ref}</div>`)}
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+
           <!-- Verdict Header -->
           <div class="panel p-6 flex items-center justify-between">
             <div class="flex items-center gap-6">
@@ -452,12 +747,30 @@
                 return html`
                   <div class="fact-row ${fact.critical ? 'border-l-2' : ''}" style="${fact.critical ? 'border-left-color: var(--red)' : ''}">
                     <span class="badge" style="background: var(--surface); border: 1px solid var(--border); font-size: 10px">${fact.category || '?'}</span>
-                    <span class="text-xs">${fact.fact || v.fact_id}</span>
+                    <div>
+                      <div class="text-xs">${fact.fact || v.fact_id}</div>
+                      ${(fact.critical || !v.verdict) && v.reasoning && html`
+                        <div class="text-[11px] mt-1 leading-5" style="color: var(--text-dim)">${v.reasoning}</div>
+                      `}
+                    </div>
                     <span style="color: ${v.verdict ? 'var(--green)' : 'var(--red)'}">${v.verdict ? '\u2713' : '\u2717'}</span>
                     <div class="progress-bar"><div class="progress-fill" style="width: ${(v.confidence||0)*100}%; background: ${v.verdict ? 'var(--green)' : 'var(--red)'}"></div></div>
                   </div>
                 `;
               })}
+              ${Object.keys(afv.category_breakdown || {}).length > 0 && html`
+                <div class="px-4 py-3 border-t" style="border-color: var(--border)">
+                  <div class="text-[11px] uppercase tracking-[0.12em] mb-2" style="color: var(--text-dim)">Category Breakdown</div>
+                  <div class="flex flex-wrap gap-2">
+                    ${Object.entries(afv.category_breakdown || {}).map(([category, score]) => html`
+                      <div class="px-3 py-2 rounded panel text-xs font-mono">
+                        <span style="color: var(--text-dim)">${category}</span>
+                        <span class="ml-2" style="color: var(--text)">${formatPercent(score, 0)}</span>
+                      </div>
+                    `)}
+                  </div>
+                </div>
+              `}
             </div>
           </div>
 
@@ -475,13 +788,59 @@
               <!-- OCR -->
               <div>
                 <h4 class="text-xs font-semibold mb-2" style="color: var(--text-dim)">TEXT MATCHING</h4>
-                ${(brand.text_score?.matches || []).map(m => html`
-                  <div class="flex items-center gap-2 mb-1 text-xs">
-                    <span style="color: ${m.matched ? 'var(--green)' : 'var(--red)'}">${m.matched ? '\u2713' : '\u2717'}</span>
-                    <span class="${m.critical ? 'font-bold' : ''}">${m.expected}</span>
-                    <span style="color: var(--text-dim)">${(m.score*100).toFixed(0)}%</span>
+                ${(brand.text_score?.matches || []).map(m => {
+                  const diagnostic = getTextMatchDiagnostic(m, extractedTexts);
+                  const statusLabel = m.matched
+                    ? 'Exact'
+                    : diagnostic.kind === 'near_miss'
+                      ? 'Near miss'
+                      : 'Miss';
+                  const statusColor = m.matched
+                    ? 'var(--green)'
+                    : diagnostic.kind === 'near_miss'
+                      ? 'var(--amber)'
+                      : 'var(--red)';
+
+                  return html`
+                    <div class="mb-3">
+                      <div class="flex items-center gap-2 text-xs">
+                        <span style="color: ${m.matched ? 'var(--green)' : 'var(--red)'}">${m.matched ? '\u2713' : '\u2717'}</span>
+                        <span class="${m.critical ? 'font-bold' : ''}">${m.expected}</span>
+                        <span class="ml-auto font-semibold" style="color: ${statusColor}">${statusLabel}</span>
+                      </div>
+                      ${!m.matched && diagnostic.phrase && html`
+                        <div class="mt-1 pl-5 text-[11px] leading-5" style="color: var(--text-dim)">
+                          Closest OCR: <span class="font-mono" style="color: var(--text)">${diagnostic.phrase.toUpperCase()}</span>
+                          ${diagnostic.similarity != null && html`
+                            <span> (${(diagnostic.similarity * 100).toFixed(0)}% similar, diagnostic only)</span>
+                          `}
+                        </div>
+                      `}
+                      ${m.match_mode !== 'exact_token' && !m.matched && diagnostic.similarity != null && html`
+                        <div class="mt-1 pl-5 text-[11px]" style="color: var(--text-dim)">
+                          Fuzzy match score: ${(diagnostic.similarity * 100).toFixed(0)}%
+                        </div>
+                      `}
+                    </div>
+                  `;
+                })}
+                ${extractedTexts.length > 0 && html`
+                  <div class="mt-4 pt-3 border-t space-y-2" style="border-color: var(--border)">
+                    <div class="text-[11px] font-semibold" style="color: var(--text-dim)">OCR EXTRACTION</div>
+                    ${extractedTexts.map(text => html`
+                      <div class="text-xs font-mono px-3 py-2 rounded break-words" style="background: var(--surface); border: 1px solid var(--border); color: var(--text)">
+                        ${text}
+                      </div>
+                    `)}
+                    <div class="text-[11px]" style="color: var(--text-dim)">
+                      Exact-token checks require the OCR text to contain the expected phrase exactly. Near-miss hints above are diagnostic only, so cases like
+                      <span class="font-mono" style="color: var(--text)">RUM</span>
+                      vs
+                      <span class="font-mono" style="color: var(--text)">RUN</span>
+                      still count as misses in the actual benchmark.
+                    </div>
                   </div>
-                `)}
+                `}
               </div>
               <!-- Color -->
               <div>
@@ -496,6 +855,19 @@
                     </span>
                   </div>
                 `)}
+                ${brand.color_score?.extracted_colors_hex?.length > 0 && html`
+                  <div class="mt-4 pt-3 border-t" style="border-color: var(--border)">
+                    <div class="text-[11px] font-semibold mb-2" style="color: var(--text-dim)">Extracted Palette</div>
+                    <div class="flex flex-wrap gap-2">
+                      ${brand.color_score.extracted_colors_hex.map((hex) => html`
+                        <div class="px-2 py-2 rounded panel flex items-center gap-2 text-[11px] font-mono">
+                          <div class="color-swatch" style="width: 16px; height: 16px; background: ${hex}"></div>
+                          <span>${hex}</span>
+                        </div>
+                      `)}
+                    </div>
+                  </div>
+                `}
               </div>
             </div>
           </div>
@@ -518,9 +890,25 @@
           </div>
 
           <!-- Metadata -->
-          <div class="panel p-4 text-xs font-mono" style="color: var(--text-dim)">
-            <div class="flex flex-wrap gap-x-6 gap-y-1">
-              ${Object.entries(r.run_metadata || {}).map(([k,v]) => html`<div><span>${k}:</span> <span style="color: var(--text)">${typeof v === 'object' ? JSON.stringify(v) : v}</span></div>`)}
+          <div class="panel p-6">
+            <div class="text-sm font-semibold mb-4" style="color: var(--text-bright)">Run Metadata</div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div class="panel p-3">
+                <div style="color: var(--text-dim)">Duration</div>
+                <div class="mt-1 font-mono" style="color: var(--text)">${runMetadata.duration_ms != null ? `${runMetadata.duration_ms} ms` : '—'}</div>
+              </div>
+              <div class="panel p-3">
+                <div style="color: var(--text-dim)">Threshold Source</div>
+                <div class="mt-1 font-mono break-words" style="color: var(--text)">${runMetadata.thresholds_source || '—'}</div>
+              </div>
+              <div class="panel p-3">
+                <div style="color: var(--text-dim)">Golden Spec</div>
+                <div class="mt-1 font-mono" style="color: var(--text)">${runMetadata.golden_spec_id || config.spec_id || '—'}</div>
+              </div>
+              <div class="panel p-3">
+                <div style="color: var(--text-dim)">Confidence</div>
+                <div class="mt-1 font-mono" style="color: var(--text)">${formatScore(f.confidence, 3)}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -678,7 +1066,7 @@
         <${Nav} view=${view} setView=${setView} demoMode=${effectiveDemoMode} setDemoMode=${setDemoMode}
           serverReplay=${serverMode?.mode === 'replay'} liveReady=${serverMode?.live_ready} />
         ${view === 'showcase' && html`<${ShowcaseView} openReplay=${openReplay} />`}
-        ${view === 'report' && html`<${ReportView} report=${report} />`}
+        ${view === 'report' && html`<${ReportView} report=${report} openReplay=${openReplay} goShowcase=${() => setView('showcase')} />`}
         ${view === 'runs' && html`<${RunsView} onSelectRun=${handleSelectRun} demoMode=${effectiveDemoMode} />`}
         ${view === 'lab' && html`<${LabView} demoMode=${effectiveDemoMode} onReport=${handleReport} />`}
       `;
