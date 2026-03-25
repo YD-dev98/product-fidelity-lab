@@ -46,12 +46,89 @@
   </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div class="max-w-5xl mx-auto p-6">
+      <div class="panel p-6 space-y-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="badge badge-incomplete">loading</span>
+          <span class="badge badge-pending">demo</span>
+        </div>
+        <div>
+          <h1 class="text-2xl font-semibold" style="color: var(--text-bright)">Product Fidelity Lab</h1>
+          <p class="text-sm leading-7 mt-3" style="color: var(--text)">
+            In demo mode, this should open on the strict benchmark showcase with two hero cards:
+            the strict baseline failure and the strict edit remediation success.
+          </p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 text-xs leading-6">
+          <div class="panel p-4">
+            <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">Expected first view</div>
+            <div class="mt-2">Showcase tab with benchmark summary, before/after images, allowed and forbidden references, and evaluator proof.</div>
+          </div>
+          <div class="panel p-4">
+            <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">If this does not change</div>
+            <div class="mt-2">The browser likely failed to load the module dependencies from the CDN. Try a hard refresh and check access to <span class="mono">esm.sh</span> and <span class="mono">jsdelivr</span>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { html, render, useState, useEffect, useRef } from 'https://esm.sh/htm@3/preact/standalone';
 
     const API = '';
+    const mountBootError = (message) => {
+      const root = document.getElementById('app');
+      if (!root) return;
+      root.innerHTML = `
+        <div class="max-w-4xl mx-auto p-6">
+          <div class="panel p-6 space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="badge badge-fail">frontend boot failed</span>
+              <span class="badge badge-incomplete">demo unavailable</span>
+            </div>
+            <div class="text-sm leading-7" style="color: var(--text)">
+              ${message}
+            </div>
+            <div class="text-xs leading-6" style="color: var(--text-dim)">
+              In replay mode, the first screen should be the strict benchmark showcase with the strict baseline and strict edit runs.
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    window.addEventListener('error', (event) => {
+      if (!event?.message) return;
+      mountBootError(event.message);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event?.reason;
+      const message = typeof reason === 'string' ? reason : reason?.message || 'Unhandled frontend error.';
+      mountBootError(message);
+    });
+
+    const SHOWCASE = {
+      protocol: 'strict_hero_front_straight',
+      target: 'hero_front_straight',
+      baselineReplayId: 'strict-baseline-showcase',
+      strictEditReplayId: 'strict-edit-showcase',
+      baselineImage: 'https://v3b.fal.media/files/b/0a93821e/f5DFha7XhX6BbNbRBFuNC_tGwN7Rbn.jpg',
+      editImage: 'https://v3b.fal.media/files/b/0a938438/U2gImJMyqUrHrw7hyq1aA_1UuzFE3q.jpg',
+      baseline: { grade: 'B', overall: 0.709, text: 0.000, brand: 0.374, note: 'One-shot baseline under strict non-target references.' },
+      remediation: { grade: 'B', overall: 0.824, text: 0.429, brand: 0.641, brandDelta: '+0.267', afvDelta: '0.000', note: 'Strict edit remediation using only label_closeup and side_left.' },
+      allowedRefs: ['label_closeup', 'cap_closeup', 'neck_closeup', 'glass_material_detail', 'side_left', 'back_straight'],
+      forbiddenRefs: ['hero_front_straight', 'hero_front_left_45', 'hero_front_right_45', 'side_right'],
+      perturbations: [
+        { name: 'Text removal', status: 'Caught', detail: 'Biggest drop. OCR and hard gates trip immediately.' },
+        { name: 'Crop shift', status: 'Caught', detail: 'Depth layer flags geometry/composition drift.' },
+        { name: 'Brightness reduction', status: 'Caught', detail: 'AFV catches the lighting change as a critical failure.' },
+        { name: 'Blur', status: 'Blind spot', detail: 'Current first version is not sensitive enough here.' },
+        { name: 'Hue rotation', status: 'Blind spot', detail: 'Color shift was subtle enough to avoid a fail.' },
+      ],
+    };
 
     // --- Utility ---
     const fetchJSON = async (url) => { const r = await fetch(API + url); return r.json(); };
@@ -62,8 +139,9 @@
 
     // --- Components ---
 
-    function Nav({ view, setView, demoMode, setDemoMode, serverReplay }) {
-      const tabs = [['evaluate','Evaluate'],['report','Report'],['perturbations','Perturbations'],['generate','Generate'],['runs','Runs']];
+    function Nav({ view, setView, demoMode, setDemoMode, serverReplay, liveReady }) {
+      const tabs = [['showcase','Showcase'],['report','Report'],['runs','Runs']];
+      if (liveReady && !demoMode) tabs.push(['lab', 'Live Tools']);
       return html`
         <header class="border-b" style="border-color: var(--border)">
           <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -85,6 +163,146 @@
             </div>
           </div>
         </header>
+      `;
+    }
+
+    function ShowcaseMetric({ label, value, tone = 'var(--text-bright)' }) {
+      return html`
+        <div class="panel p-4">
+          <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">${label}</div>
+          <div class="text-2xl font-semibold mt-2" style="color: ${tone}">${value}</div>
+        </div>
+      `;
+    }
+
+    function ShowcaseView({ openReplay }) {
+      return html`
+        <div class="max-w-6xl mx-auto p-6 space-y-6">
+          <div class="panel p-6 md:p-8">
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <span class="badge badge-pass">strict benchmark</span>
+              <span class="badge badge-incomplete">${SHOWCASE.protocol}</span>
+            </div>
+            <div class="grid md:grid-cols-[1.4fr,0.8fr] gap-6 items-start">
+              <div class="space-y-4">
+                <h2 class="text-3xl font-semibold leading-tight" style="color: var(--text-bright)">
+                  An evaluator-first benchmark and improvement loop for product imagery.
+                </h2>
+                <p class="text-sm leading-7" style="color: var(--text)">
+                  The final benchmark asks a fair question: given only non-target references for one product, can the
+                  system produce a publishable <span class="mono">hero_front_straight</span> candidate and prove its fidelity?
+                  The answer here is nuanced and useful: one-shot generation fails on brand text, while constrained
+                  remediation materially improves the candidate without structural regression.
+                </p>
+                <div class="flex flex-wrap gap-3">
+                  <button onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Inspect Strict Baseline</button>
+                  <button class="secondary" onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Inspect Strict Edit</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <${ShowcaseMetric} label="Baseline" value="B / 0.709" />
+                <${ShowcaseMetric} label="Strict Edit" value="B / 0.824" tone="var(--green)" />
+                <${ShowcaseMetric} label="Text Recovery" value="0.000 → 0.429" />
+                <${ShowcaseMetric} label="Brand Delta" value="+0.267" tone="var(--green)" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-6">
+            <div class="panel overflow-hidden">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--border)">
+                <div>
+                  <div class="text-sm font-semibold" style="color: var(--text-bright)">Strict Baseline</div>
+                  <div class="text-xs mt-1" style="color: var(--text-dim)">${SHOWCASE.baseline.note}</div>
+                </div>
+                <span class="badge badge-fail">hard gate fail</span>
+              </div>
+              <img src=${SHOWCASE.baselineImage} alt="Strict baseline candidate" class="w-full" />
+              <div class="p-4 grid grid-cols-3 gap-3 text-xs font-mono">
+                <div><div style="color: var(--text-dim)">Grade</div><div class="mt-1 grade-B font-bold text-lg">B</div></div>
+                <div><div style="color: var(--text-dim)">Overall</div><div class="mt-1 text-lg">${SHOWCASE.baseline.overall.toFixed(3)}</div></div>
+                <div><div style="color: var(--text-dim)">Text</div><div class="mt-1 text-lg">${SHOWCASE.baseline.text.toFixed(3)}</div></div>
+              </div>
+            </div>
+            <div class="panel overflow-hidden">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--border)">
+                <div>
+                  <div class="text-sm font-semibold" style="color: var(--text-bright)">Strict Edit Success</div>
+                  <div class="text-xs mt-1" style="color: var(--text-dim)">${SHOWCASE.remediation.note}</div>
+                </div>
+                <span class="badge badge-pass">clean B pass</span>
+              </div>
+              <img src=${SHOWCASE.editImage} alt="Strict edit candidate" class="w-full" />
+              <div class="p-4 grid grid-cols-4 gap-3 text-xs font-mono">
+                <div><div style="color: var(--text-dim)">Grade</div><div class="mt-1 grade-B font-bold text-lg">B</div></div>
+                <div><div style="color: var(--text-dim)">Overall</div><div class="mt-1 text-lg">${SHOWCASE.remediation.overall.toFixed(3)}</div></div>
+                <div><div style="color: var(--text-dim)">Text</div><div class="mt-1 text-lg">${SHOWCASE.remediation.text.toFixed(3)}</div></div>
+                <div><div style="color: var(--text-dim)">AFV Δ</div><div class="mt-1 text-lg">${SHOWCASE.remediation.afvDelta}</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-2 gap-6">
+            <div class="panel p-6">
+              <h3 class="text-sm font-semibold mb-4" style="color: var(--text-bright)">Why this benchmark is fair</h3>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <div class="text-[11px] uppercase tracking-[0.12em] mb-2" style="color: var(--text-dim)">Allowed refs</div>
+                  <div class="space-y-2">
+                    ${SHOWCASE.allowedRefs.map((ref) => html`<div class="text-xs px-3 py-2 rounded panel">${ref}</div>`)}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-[11px] uppercase tracking-[0.12em] mb-2" style="color: var(--text-dim)">Forbidden refs</div>
+                  <div class="space-y-2">
+                    ${SHOWCASE.forbiddenRefs.map((ref) => html`<div class="text-xs px-3 py-2 rounded panel" style="border-color:#5b1a1a;color:var(--red)">${ref}</div>`)}
+                  </div>
+                </div>
+              </div>
+              <p class="text-xs leading-6 mt-4" style="color: var(--text-dim)">
+                The target image never appears in generation or remediation inputs. Hero-angle references are forbidden,
+                and <span class="mono">side_right</span> is excluded because it is only a mirrored duplicate of
+                <span class="mono">side_left</span>.
+              </p>
+            </div>
+            <div class="panel p-6">
+              <h3 class="text-sm font-semibold mb-4" style="color: var(--text-bright)">Evaluator proof</h3>
+              <div class="space-y-3">
+                ${SHOWCASE.perturbations.map((p) => html`
+                  <div class="flex items-start justify-between gap-4 p-3 rounded panel">
+                    <div>
+                      <div class="text-xs font-semibold" style="color: var(--text-bright)">${p.name}</div>
+                      <div class="text-xs mt-1 leading-6" style="color: var(--text-dim)">${p.detail}</div>
+                    </div>
+                    <span class="badge ${p.status === 'Caught' ? 'badge-pass' : 'badge-incomplete'}">${p.status}</span>
+                  </div>
+                `)}
+              </div>
+            </div>
+          </div>
+
+          <div class="panel p-6">
+            <h3 class="text-sm font-semibold mb-4" style="color: var(--text-bright)">The final story</h3>
+            <div class="grid md:grid-cols-4 gap-4 text-xs leading-6">
+              <div class="panel p-4">
+                <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">1. Benchmark</div>
+                <div class="mt-2">Strict held-out protocol with non-target references only.</div>
+              </div>
+              <div class="panel p-4">
+                <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">2. Diagnose</div>
+                <div class="mt-2">One-shot generation fails on brand-critical text and hard-gates.</div>
+              </div>
+              <div class="panel p-4">
+                <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">3. Remediate</div>
+                <div class="mt-2">A constrained edit step uses only allowed references to repair the label.</div>
+              </div>
+              <div class="panel p-4">
+                <div class="text-[11px] uppercase tracking-[0.12em]" style="color: var(--text-dim)">4. Verify</div>
+                <div class="mt-2">The evaluator confirms better text and brand fidelity with zero AFV regression.</div>
+              </div>
+            </div>
+          </div>
+        </div>
       `;
     }
 
@@ -363,12 +581,36 @@
       `;
     }
 
+    function LabView({ demoMode, onReport }) {
+      const [tool, setTool] = useState('evaluate');
+      return html`
+        <div class="max-w-5xl mx-auto p-6 space-y-4">
+          <div class="panel p-3 flex gap-2">
+            <button class=${tool === 'evaluate' ? '' : 'secondary'} onClick=${() => setTool('evaluate')}>Evaluate</button>
+            <button class=${tool === 'generate' ? '' : 'secondary'} onClick=${() => setTool('generate')}>Generate</button>
+          </div>
+          ${tool === 'evaluate'
+            ? html`<${EvaluateView} onReport=${onReport} demoMode=${demoMode} />`
+            : html`<${GenerateView} demoMode=${demoMode} />`}
+        </div>
+      `;
+    }
+
     function RunsView({ onSelectRun, demoMode }) {
       const [runs, setRuns] = useState([]);
       useEffect(() => {
         const endpoint = demoMode ? '/api/replay/runs' : '/api/runs?limit=50';
         fetchJSON(endpoint).then(setRuns);
       }, [demoMode]);
+
+      const prioritizedRuns = [...runs].sort((a, b) => {
+        const priority = (run) => {
+          if (run.id === SHOWCASE.strictEditReplayId) return 0;
+          if (run.id === SHOWCASE.baselineReplayId) return 1;
+          return 2;
+        };
+        return priority(a) - priority(b);
+      });
 
       return html`
         <div class="max-w-4xl mx-auto p-6">
@@ -377,16 +619,21 @@
               <h2 class="text-sm font-semibold" style="color: var(--text-bright)">Runs</h2>
             </div>
             ${runs.length === 0 && html`<div class="p-8 text-center text-xs" style="color: var(--text-dim)">No runs yet</div>`}
-            ${runs.map(r => {
+            ${prioritizedRuns.map(r => {
               const outcome = r.result?.final?.outcome;
               const isIncomplete = r.status === 'complete' && outcome === 'incomplete';
               const typeBadge = isIncomplete ? 'incomplete' : r.status === 'complete' ? (r.passed ? 'pass' : 'fail') : r.status === 'failed' ? 'fail' : 'pending';
               const statusBadge = isIncomplete ? 'incomplete' : r.status === 'complete' ? 'pass' : r.status === 'failed' ? 'fail' : 'pending';
+              const title = r.config?.label || r.config?.spec_id || r.id;
+              const subtitle = r.config?.note || r.config?.benchmark || r.config?.source || r.id;
               return html`
                 <div class="flex items-center justify-between px-4 py-3 border-b cursor-pointer hover:bg-white/5" style="border-color: var(--border)" onClick=${()=>onSelectRun(r)}>
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-3 min-w-0">
                     <span class="badge badge-${typeBadge}">${r.type}</span>
-                    <span class="text-xs font-mono" style="color: var(--text-dim)">${r.id}</span>
+                    <div class="min-w-0">
+                      <div class="text-xs font-semibold truncate" style="color: var(--text-bright)">${title}</div>
+                      <div class="text-[11px] font-mono truncate" style="color: var(--text-dim)">${subtitle}</div>
+                    </div>
                   </div>
                   <div class="flex items-center gap-4">
                     ${isIncomplete
@@ -405,7 +652,7 @@
     }
 
     function App() {
-      const [view, setView] = useState('runs');
+      const [view, setView] = useState('showcase');
       const [demoMode, setDemoMode] = useState(false);
       const [serverMode, setServerMode] = useState(null);
       const [report, setReport] = useState(null);
@@ -414,7 +661,7 @@
       useEffect(() => {
         fetchJSON('/api/mode').then(m => {
           setServerMode(m);
-          if (m.mode === 'replay') { setDemoMode(true); setView('runs'); }
+          if (m.mode === 'replay') { setDemoMode(true); setView('showcase'); }
         });
       }, []);
 
@@ -422,15 +669,18 @@
 
       const handleReport = (r) => { setReport(r); setView('report'); };
       const handleSelectRun = (r) => { setReport(r); setView('report'); };
+      const openReplay = async (runId) => {
+        const r = await fetchJSON('/api/replay/runs/' + runId);
+        if (!r?.detail) handleReport(r);
+      };
 
       return html`
         <${Nav} view=${view} setView=${setView} demoMode=${effectiveDemoMode} setDemoMode=${setDemoMode}
-          serverReplay=${serverMode?.mode === 'replay'} />
-        ${view === 'evaluate' && html`<${EvaluateView} onReport=${handleReport} demoMode=${effectiveDemoMode} />`}
+          serverReplay=${serverMode?.mode === 'replay'} liveReady=${serverMode?.live_ready} />
+        ${view === 'showcase' && html`<${ShowcaseView} openReplay=${openReplay} />`}
         ${view === 'report' && html`<${ReportView} report=${report} />`}
-        ${view === 'perturbations' && html`<${PerturbationsView} />`}
-        ${view === 'generate' && html`<${GenerateView} demoMode=${effectiveDemoMode} />`}
         ${view === 'runs' && html`<${RunsView} onSelectRun=${handleSelectRun} demoMode=${effectiveDemoMode} />`}
+        ${view === 'lab' && html`<${LabView} demoMode=${effectiveDemoMode} onReport=${handleReport} />`}
       `;
     }
 

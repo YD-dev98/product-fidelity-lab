@@ -2,8 +2,15 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+.DS_Store
 .env
 *.db
+*.sqlite3
+*.log
+.coverage
+htmlcov/
+.mypy_cache/
+.ipynb_checkpoints/
 data/runs/
 data/cache/
 .ruff_cache/

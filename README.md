@@ -2,15 +2,26 @@
 
 When an AI-generated product shot looks plausible at first glance, how do you actually prove it's good enough to publish?
 
-This project is my answer to that. It's an evaluation system for AI-generated product photography — it generates candidate images, runs them against a frozen golden benchmark, and produces forensic reports that explain exactly what's wrong and why. The evaluator is the interesting part, not the generation.
+This project is my answer to that. It's an evaluation system and improvement loop for AI-generated product photography. Given only non-target reference images of a product, it generates a held-out candidate for a target shot, evaluates it against a frozen golden benchmark, identifies exactly where it fails, and applies constrained remediation to improve fidelity — all under a strict protocol that prevents the target image from ever leaking into the inputs.
 
-## The problem
+## The claim
 
-Most image generation demos stop at "looks nice." Product photography has harder requirements. Brand text needs to be readable. Colors need to match actual brand specs, not just look vaguely right. Geometry needs to hold up. And when something fails, you need to know *why* — a score alone doesn't help anyone fix the shot.
+Under a strict held-out protocol, one-shot generation fails on brand-critical text. Constrained edit remediation materially improves fidelity without structural regression. The evaluator proves both claims with evidence.
 
-I wanted to turn those requirements into something measurable, reproducible, and honest about its own limitations.
+## Benchmark results
+
+Protocol: `strict_hero_front_straight` — target image and all hero angles forbidden from inputs.
+
+| Stage | Grade | Overall | Text | Brand | AFV Delta |
+|-------|-------|---------|------|-------|-----------|
+| One-shot baseline | B | 0.709 | 0.000 | 0.374 | — |
+| Edit remediation | B | 0.824 | 0.429 | 0.641 | 0.000 |
+
+The edit recovered BACARDI label text (0.000 -> 0.429), improved brand score by +0.267, and reached 0.824 overall, with zero AFV regression and positive depth deltas across all 8 runs. Full experiment details live in `docs/experiments/`.
 
 ## How it works
+
+### Evaluator
 
 Candidates are evaluated against a curated golden set using three concurrent layers:
 
@@ -27,35 +38,61 @@ flowchart LR
     G --> H["Forensic Report"]
 ```
 
-**Atomic Fact Verification (AFV)** — Sends the candidate and a curated list of facts to Gemini. Gets back per-fact verdicts with confidence and reasoning. Critical facts trigger hard gates — if the bottle cap is missing, it doesn't matter how nice the lighting is.
+**Atomic Fact Verification (AFV)** — Sends the candidate and a curated list of facts to Gemini. Gets back per-fact verdicts with confidence and reasoning. Critical facts trigger hard gates.
 
-**Structural Integrity** — Depth Anything V2 generates depth maps for golden and candidate, then I compare with SSIM, correlation, and MSE. Catches geometry and composition drift that's easy to miss visually.
+**Structural Integrity** — Depth Anything V2 generates depth maps for golden and candidate, then compares with SSIM, correlation, and MSE. Catches geometry and composition drift.
 
-**Brand Integrity** — OCR extracts text and matches it against expected brand tokens. KMeans extracts dominant colors, compared via Delta-E CIE2000 in LAB space. Missing critical text is a hard gate.
+**Brand Integrity** — OCR extracts text and matches against expected brand tokens. KMeans extracts dominant colors, compared via Delta-E CIE2000. Missing critical text is a hard gate.
 
-### Hard gates
+**Hard gates** — Some failures are non-negotiable. A beautiful image with the wrong label text auto-fails regardless of score.
 
-Some failures are non-negotiable. If a critical fact is false or critical brand text is missing, the image auto-fails regardless of score. This is the part that makes it useful for real product work — a beautiful image with the wrong label is still wrong.
+**Calibration** — Grade thresholds come from self-evaluating the golden set and freezing the resulting distributions.
 
-### Calibration
+**Perturbation validation** — Controlled degradations (blur, crop shift, hue rotation, text removal, brightness reduction) prove the evaluator catches real problems. 3 of 5 detected with clear score drops.
 
-Grade thresholds aren't hand-picked. They come from self-evaluating the golden set and freezing the resulting distributions. The system knows what "good" looks like because it measured it.
+### Benchmark protocol
 
-### Perturbation validation
+The strict benchmark enforces what counts as fair:
 
-To prove the evaluator catches real problems, I run it against controlled degradations of golden images — blur, crop shift, hue rotation, text removal, brightness reduction. If it can't detect these, its scores are meaningless.
+- The target shot never appears in generation or edit inputs
+- Hero-angle references are forbidden (too close to the target viewpoint)
+- Mirror-duplicate shots are excluded as non-independent
+- Budget is capped
+- Success criteria are defined before running
 
-## Results
+See `docs/benchmark-protocol.md` for full details.
 
-The perturbation suite catches 3 out of 5 degradations with clear score drops:
+### Improvement loop
 
-- **Text removal** — biggest drop (A to C), caught both the obscured label and inferred missing content
-- **Crop shift** — depth layer caught the geometry change, SSIM dropped to 0.416
-- **Brightness** — AFV caught the lighting change as a critical fact failure
+1. **Generate** baseline candidate from strict references
+2. **Evaluate** it — the evaluator identifies blank label text as a hard-gate failure
+3. **Search** — systematic exploration proves prompt tuning alone can't fix it (22 runs, 0.000 text across all configs)
+4. **Remediate** — constrained edit using only `label_closeup` and `side_left` recovers label text
+5. **Re-evaluate** — the evaluator confirms the improvement and checks for structural regression
 
-Blur and hue rotation are current blind spots. The perturbations were subtle enough that the evaluator didn't flag them. I think that's a reasonable first version — it detects meaningful failures, not every possible one.
+This is not pure one-shot generation. It's an evaluator-guided pipeline that treats generation failures as inputs to a remediation step, and uses the evaluator to prove the fix worked.
 
-On the generation side, FLUX.2 flex hits a visible ceiling: it gets the bottle shape, pose, cap, and liquid right, but produces blank labels. The evaluator catches this consistently (best candidate: C grade, 0.697). That's the system working as intended — the evaluator is more discerning than the generator.
+## Supporting experiment history
+
+These runs are included to show the iteration path that led to the final strict benchmark. The canonical path through the project is the strict baseline plus strict edit remediation.
+
+| Experiment | Runs | Cost | Finding |
+|------------|------|------|---------|
+| Perturbation suite | 5 | — | Evaluator catches 3/5 controlled degradations |
+| One-shot search (label-fidelity-v1) | 22 | $0.95 | Prompt/reference/guidance tuning cannot recover label text |
+| Reference-conditioned edit | 7 | $0.42 | Edit with target reference produces A grades (secondary evidence) |
+| Held-out one-shot | 16 | $0.80 | Confirms ceiling without hero angles |
+| Held-out edit | 8 | $0.24 | Non-leaking remediation works, but still relies on a hero-angle reference |
+| **Strict baseline** | **4** | **$0.20** | **Text 0.000 across all runs under strict protocol** |
+| **Strict edit** | **8** | **$0.48** | **Text 0.429, brand +0.267, zero AFV regression** |
+
+Total paid experiment cost: ~$3.09
+
+## What remains unsolved
+
+- Text score reached 0.429 under the strict protocol, not 1.0. Fine-print text is not fully recovered.
+- No A grades under the strict protocol so far. The held-out experiment with hero angles produced A grades, but the stricter protocol has currently topped out at B.
+- Deterministic label compositing would likely close the remaining gap but was not needed to prove the core claim.
 
 ## Quick start
 
@@ -67,7 +104,7 @@ uv run pfl-demo --replay
 # http://localhost:8000
 ```
 
-Ships with 7 curated runs — generation candidates at different quality levels plus the perturbation suite. Good way to see what the system does without spending credits.
+In replay mode, start with the `Showcase` tab. It opens on the strict benchmark story with a curated baseline failure and strict remediation success.
 
 ### Live mode
 
@@ -81,43 +118,14 @@ uv run python scripts/run_calibration.py
 uv run pfl-demo --live
 ```
 
-### Perturbations
+### Run the strict benchmark
 
 ```bash
-uv run python scripts/run_perturbations.py hero_front_straight
+uv run python scripts/run_strict_baseline.py     # 4 runs, ~$0.20
+uv run python scripts/run_strict_edit.py         # 8 runs, ~$0.48
 ```
 
-### Generate + evaluate
-
-```bash
-uv run python scripts/run_live_test.py hero_front_straight
-```
-
-## Exploring the demo
-
-If you want to get the point quickly:
-
-1. Start in replay mode
-2. Look at a near-miss candidate — something that looks okay but fails on brand text
-3. Look at an obvious failure — the evaluator should be harsh and specific
-4. Open a perturbation report — this is how I prove the evaluator isn't just making up numbers
-5. Check the baseline golden self-eval — it should score high, confirming the rubric works
-
-That order makes the evaluator-first story land fast.
-
-## API
-
-OpenAPI docs at `http://localhost:8000/docs`.
-
-| Method | Endpoint                 | Purpose                             |
-| ------ | ------------------------ | ----------------------------------- |
-| `POST` | `/api/evaluate`          | Evaluate a candidate against a spec |
-| `POST` | `/api/generate`          | Generation job                      |
-| `POST` | `/api/generate/for-spec` | Spec-aware multi-reference gen      |
-| `GET`  | `/api/runs/{id}`         | Poll run status and results         |
-| `GET`  | `/api/runs`              | List stored runs                    |
-| `GET`  | `/api/golden/specs`      | List golden specs                   |
-| `GET`  | `/api/replay/runs`       | List replay runs                    |
+Older scripts such as `run_search.py`, `run_heldout_search.py`, and `run_label_edit.py` are still in the repo as supporting experiment history, but they are not the main benchmark path anymore.
 
 ## Project structure
 
@@ -125,19 +133,25 @@ OpenAPI docs at `http://localhost:8000/docs`.
 ├── src/product_fidelity_lab/
 │   ├── api/                    # FastAPI routes
 │   ├── evaluation/             # AFV, depth, brand, aggregation, calibration
-│   ├── generation/             # FLUX generation + prompt building
+│   ├── generation/             # FLUX generation, edit, prompt strategies
 │   ├── models/                 # Pydantic domain models
 │   ├── storage/                # SQLite, diskcache, replay
+│   ├── benchmark_protocol.py   # Protocol enforcement
+│   ├── search.py               # Search experiment infrastructure
 │   ├── config.py
 │   └── main.py
 ├── frontend/
 │   └── index.html              # Preact + HTM, zero-build SPA
 ├── data/
 │   ├── golden/                 # Reference images + frozen specs
+│   ├── benchmarks/             # Benchmark protocol definitions
 │   ├── calibration/            # Frozen grade thresholds
-│   └── replay/                 # Curated demo runs
-├── scripts/                    # Preparation, calibration, live tests, perturbations
-└── tests/
+│   └── runs/experiments/       # All experiment artifacts
+├── docs/
+│   ├── benchmark-protocol.md   # What counts as leakage, what's allowed
+│   └── experiments/            # Per-experiment memos
+├── scripts/                    # Baseline, search, edit, calibration, perturbations
+└── tests/                      # 174 tests (unit + integration)
 ```
 
 ## Tech stack
@@ -147,7 +161,7 @@ OpenAPI docs at `http://localhost:8000/docs`.
 | Backend    | FastAPI, Python 3.12+                |
 | Models     | Pydantic v2                          |
 | VLM        | Gemini 2.5                           |
-| Generation | fal.ai FLUX.2 flex                   |
+| Generation | fal.ai FLUX.2 flex (+ edit endpoint) |
 | OCR        | fal.ai GOT-OCR 2.0                  |
 | Depth      | fal.ai Depth Anything V2             |
 | Color      | scikit-learn KMeans, Delta-E CIE2000 |
@@ -155,12 +169,4 @@ OpenAPI docs at `http://localhost:8000/docs`.
 | Frontend   | Preact + HTM, zero build             |
 | Quality    | pytest, Ruff, Pyright (strict)       |
 
-103 tests passing, ruff clean, pyright strict clean.
-
-## Cost
-
-- Evaluate a candidate: ~$0.06
-- Re-evaluate (cached): ~$0.01
-- Generate + evaluate: ~$0.11
-
-Cheap enough to iterate fast, with caching and replay so you're not paying twice for the same work.
+174 tests passing, ruff clean, pyright strict clean.
