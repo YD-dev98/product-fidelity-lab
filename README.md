@@ -4,9 +4,29 @@ When an AI-generated product shot looks plausible at first glance, how do you ac
 
 This project is my answer to that. It's an evaluation system and improvement loop for AI-generated product photography. Given only non-target reference images of a product, it generates a held-out candidate for a target shot, evaluates it against a frozen golden benchmark, identifies exactly where it fails, and applies constrained remediation to improve fidelity — all under a strict protocol that prevents the target image from ever leaking into the inputs.
 
+## Start here
+
+If you only spend 2 minutes on this repo:
+
+1. Read the strict benchmark result below.
+2. Open the replay demo and inspect `Strict Baseline` vs `Strict Edit`.
+3. Skim the case study at [`docs/case-study.md`](docs/case-study.md).
+
+![Product Fidelity Lab showcase](docs/assets/readme-showcase.png)
+
 ## The claim
 
 Under a strict held-out protocol, one-shot generation fails on brand-critical text. Constrained edit remediation materially improves fidelity without structural regression. The evaluator proves both claims with evidence.
+
+## At a glance
+
+| Question | Answer |
+|----------|--------|
+| What is it? | An evaluator-first benchmark and improvement loop for product imagery |
+| Why is it fair? | Frozen golden specs, hard gates, calibrated thresholds, strict non-leaking protocol |
+| What failed? | One-shot generation under the strict protocol |
+| What worked? | Constrained edit remediation using only allowed references |
+| What matters? | The evaluator proves the delta, not just visual intuition |
 
 ## Benchmark results
 
@@ -18,6 +38,16 @@ Protocol: `strict_hero_front_straight` — target image and all hero angles forb
 | Edit remediation | B | 0.824 | 0.429 | 0.641 | 0.000 |
 
 The edit recovered BACARDI label text (0.000 -> 0.429), improved brand score by +0.267, and reached 0.824 overall, with zero AFV regression and positive depth deltas across all 8 runs. Full experiment details live in `docs/experiments/`.
+
+## Demo flow
+
+- Replay demo: `uv run pfl-demo --replay`
+- Start on the `Showcase` tab
+- Open `Strict Baseline` to see the one-shot failure
+- Open `Strict Edit` to see the remediation result
+- Use the report view to inspect verdict logic, AFV evidence, OCR matches, color fidelity, and benchmark context
+
+![Strict edit report](docs/assets/readme-report.png)
 
 ## How it works
 
@@ -61,6 +91,8 @@ The strict benchmark enforces what counts as fair:
 - Success criteria are defined before running
 
 See `docs/benchmark-protocol.md` for full details.
+
+For a short narrative walkthrough, see [`docs/case-study.md`](docs/case-study.md).
 
 ### Improvement loop
 
@@ -148,6 +180,8 @@ Older scripts such as `run_search.py`, `run_heldout_search.py`, and `run_label_e
 │   ├── calibration/            # Frozen grade thresholds
 │   └── runs/experiments/       # All experiment artifacts
 ├── docs/
+│   ├── assets/                # README screenshots
+│   ├── case-study.md          # Short narrative walkthrough
 │   ├── benchmark-protocol.md   # What counts as leakage, what's allowed
 │   └── experiments/            # Per-experiment memos
 ├── scripts/                    # Baseline, search, edit, calibration, perturbations

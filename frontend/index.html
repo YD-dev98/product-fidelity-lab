@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Fidelity Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script type="module" src="https://esm.sh/htm@3/preact/standalone"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
@@ -33,8 +32,6 @@
     .fact-row { display: grid; grid-template-columns: 80px 1fr 60px 80px; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); }
     .fact-row:last-child { border-bottom: none; }
     .color-swatch { width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border); display: inline-block; }
-    .slider-container { position: relative; overflow: hidden; cursor: col-resize; }
-    .slider-container img { display: block; width: 100%; }
     .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
     input, select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px; }
@@ -75,7 +72,7 @@
   </div>
 
   <script type="module">
-    import { html, render, useState, useEffect, useRef } from 'https://esm.sh/htm@3/preact/standalone';
+    import { html, render, useState, useEffect } from 'https://esm.sh/htm@3/preact/standalone';
 
     const API = '';
     const mountBootError = (message) => {
@@ -220,6 +217,10 @@
           deltaText,
           metricLabelOverall: 'Remediation lift',
           metricLabelText: 'Text lift available',
+          current: SHOWCASE.baseline,
+          counterpart: SHOWCASE.remediation,
+          currentLabel: 'Baseline',
+          counterpartLabel: 'Strict Edit',
         };
       }
       if (report.id === SHOWCASE.strictEditReplayId) {
@@ -230,6 +231,10 @@
           deltaText,
           metricLabelOverall: 'Overall Δ vs baseline',
           metricLabelText: 'Text Δ vs baseline',
+          current: SHOWCASE.remediation,
+          counterpart: SHOWCASE.baseline,
+          currentLabel: 'Strict Edit',
+          counterpartLabel: 'Baseline',
         };
       }
       return null;
@@ -293,7 +298,7 @@
                   remediation materially improves the candidate without structural regression.
                 </p>
                 <div class="flex flex-wrap gap-3">
-                  <button onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Inspect Strict Baseline</button>
+                  <button class="secondary" onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Inspect Strict Baseline</button>
                   <button class="secondary" onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Inspect Strict Edit</button>
                 </div>
               </div>
@@ -503,7 +508,7 @@
               Open one of the curated strict benchmark reports or return to the showcase overview.
             </div>
             <div class="flex flex-wrap items-center justify-center gap-3">
-              <button onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Open Strict Edit</button>
+              <button class="secondary" onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Open Strict Edit</button>
               <button class="secondary" onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Open Strict Baseline</button>
               <button class="secondary" onClick=${goShowcase}>Back to Showcase</button>
             </div>
@@ -524,6 +529,9 @@
       const gradeThresholds = runMetadata.grade_thresholds || {};
       const referenceList = getReferenceList(config);
       const showcaseContext = getShowcaseContext(report);
+      const activeShowcaseRunId = report.id === SHOWCASE.baselineReplayId || report.id === SHOWCASE.strictEditReplayId
+        ? report.id
+        : null;
       const hardGateCount = f.hard_gate_failures?.length || 0;
       const passesWeightedThreshold = (f.overall != null && runMetadata.pass_threshold != null)
         ? f.overall >= runMetadata.pass_threshold
@@ -551,11 +559,81 @@
               </div>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Strict Edit</button>
-              <button class="secondary" onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Strict Baseline</button>
+              <button class=${activeShowcaseRunId === SHOWCASE.strictEditReplayId ? '' : 'secondary'} onClick=${() => openReplay(SHOWCASE.strictEditReplayId)}>Strict Edit</button>
+              <button class=${activeShowcaseRunId === SHOWCASE.baselineReplayId ? '' : 'secondary'} onClick=${() => openReplay(SHOWCASE.baselineReplayId)}>Strict Baseline</button>
               <button class="secondary" onClick=${goShowcase}>Back to Showcase</button>
             </div>
           </div>
+
+          <div class="panel p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div class="space-y-3">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="badge ${f.passed ? 'badge-pass' : 'badge-fail'}">${f.passed ? 'publishable pass' : 'needs remediation'}</span>
+                  ${config.benchmark && html`<span class="badge badge-incomplete">${config.benchmark}</span>`}
+                  ${showcaseContext && html`<span class="badge badge-pending">${showcaseContext.role}</span>`}
+                </div>
+                <div>
+                  <h2 class="text-2xl font-semibold" style="color: var(--text-bright)">
+                    ${config.label || config.spec_id || report.id || 'Evaluation report'}
+                  </h2>
+                  <p class="text-sm mt-2 leading-7" style="color: var(--text)">
+                    ${showcaseContext?.summary || config.note || 'Evidence-first evaluation report for the selected candidate.'}
+                  </p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs font-mono min-w-[240px]">
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Grade</div>
+                  <div class="mt-1 text-lg grade-${f.grade || 'F'}">${f.grade || '—'}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Overall</div>
+                  <div class="mt-1 text-lg" style="color: var(--text-bright)">${formatScore(f.overall, 3)}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Brand</div>
+                  <div class="mt-1 text-lg" style="color: var(--text-bright)">${formatScore(f.breakdown?.brand, 3)}</div>
+                </div>
+                <div class="panel p-3">
+                  <div style="color: var(--text-dim)">Text</div>
+                  <div class="mt-1 text-lg" style="color: var(--text-bright)">${formatScore(brand.text_score?.score, 3)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${showcaseContext && html`
+            <div class="panel p-6 space-y-4">
+              <div>
+                <div class="text-sm font-semibold" style="color: var(--text-bright)">Showcase Comparison</div>
+                <div class="text-xs mt-1 leading-6" style="color: var(--text-dim)">
+                  The strict benchmark story in one glance: baseline failure on brand text, then constrained remediation under the same protocol.
+                </div>
+              </div>
+              <div class="grid md:grid-cols-3 gap-4 text-xs font-mono">
+                <div class="panel p-4">
+                  <div style="color: var(--text-dim)">${showcaseContext.currentLabel}</div>
+                  <div class="mt-2 text-lg grade-${showcaseContext.current.grade}">${showcaseContext.current.grade} / ${showcaseContext.current.overall.toFixed(3)}</div>
+                  <div class="mt-2" style="color: var(--text-dim)">Text ${showcaseContext.current.text.toFixed(3)}</div>
+                </div>
+                <div class="panel p-4">
+                  <div style="color: var(--text-dim)">${showcaseContext.counterpartLabel}</div>
+                  <div class="mt-2 text-lg grade-${showcaseContext.counterpart.grade}">${showcaseContext.counterpart.grade} / ${showcaseContext.counterpart.overall.toFixed(3)}</div>
+                  <div class="mt-2" style="color: var(--text-dim)">Text ${showcaseContext.counterpart.text.toFixed(3)}</div>
+                </div>
+                <div class="panel p-4">
+                  <div style="color: var(--text-dim)">Net Change</div>
+                  <div class="mt-2 text-lg" style="color: ${showcaseContext.deltaOverall >= 0 ? 'var(--green)' : 'var(--red)'}">
+                    ${showcaseContext.deltaOverall >= 0 ? '+' : ''}${showcaseContext.deltaOverall.toFixed(3)} overall
+                  </div>
+                  <div class="mt-2" style="color: ${showcaseContext.deltaText >= 0 ? 'var(--green)' : 'var(--red)'}">
+                    ${showcaseContext.deltaText >= 0 ? '+' : ''}${showcaseContext.deltaText.toFixed(3)} text
+                  </div>
+                </div>
+              </div>
+            </div>
+          `}
 
           ${(candidateImageUrl || targetImageUrl) && html`
             <div class="grid lg:grid-cols-2 gap-6">
@@ -913,10 +991,6 @@
           </div>
         </div>
       `;
-    }
-
-    function PerturbationsView() {
-      return html`<div class="max-w-4xl mx-auto p-6"><div class="panel p-12 text-center" style="color: var(--text-dim)">Run perturbation suite from the API to see results here.</div></div>`;
     }
 
     function GenerateView({ demoMode }) {
