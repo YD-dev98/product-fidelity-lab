@@ -1,0 +1,30 @@
+{
+  "benchmark_id": "strict_hero_front_straight",
+  "mode": "held_out_synthesis",
+  "target_shot_id": "hero_front_straight",
+  "description": "Generate hero_front_straight from non-hero, non-target references only. Hero angles and side_right (mirror of side_left) are also forbidden.",
+  "allowed_reference_shot_ids": [
+    "label_closeup",
+    "cap_closeup",
+    "neck_closeup",
+    "glass_material_detail",
+    "side_left",
+    "back_straight"
+  ],
+  "forbidden_shot_ids": [
+    "hero_front_straight",
+    "hero_front_left_45",
+    "hero_front_right_45",
+    "side_right"
+  ],
+  "budget_cap_usd": 3.00,
+  "success_criteria": {
+    "primary": "BACARDI matched in final candidate",
+    "secondary": "final candidate gets B or better with no hard gates",
+    "tertiary": "measurable improvement over best one-shot baseline",
+    "minimum": "final remediation materially improves text/brand without structural regression"
+  },
+  "notes": {
+    "side_right_excluded": "side_right.jpg is a horizontal flip of side_left.jpg — not independent, excluded from both inputs and targets"
+  }
+}
