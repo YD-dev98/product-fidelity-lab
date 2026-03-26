@@ -18,3 +18,4 @@ data/cache/
 .pytest_cache/
 dist/
 *.egg-info/
+docs/experiments/

@@ -22,7 +22,7 @@ Given only non-hero, non-target references for one product, produce the best pos
 - `hero_front_right_45` — hero angle, too close to target
 - `side_right` — horizontal flip of `side_left`, not independent
 
-**Budget:** $3.00 total (baseline + remediation)
+**Budget:** $3.00 total (baseline + edit step)
 
 ## What counts as leakage
 
@@ -40,7 +40,7 @@ The golden depth map and frozen spec are used for *evaluation only* — they are
 - Reference images from the allowed list only
 - Standard generation parameters (guidance, steps, seed)
 
-**In edit remediation (stage 2):**
+**In the edit step (stage 2):**
 - The generated candidate as base image
 - Reference images from the allowed list only (typically `label_closeup` + one structural ref)
 - Edit prompts describing label correction
@@ -58,7 +58,7 @@ The golden depth map and frozen spec are used for *evaluation only* — they are
 
 **Tertiary:** Measurable improvement over best one-shot baseline (brand_score_delta > 0, no AFV regression > 0.10)
 
-**Minimum viable:** Final remediation materially improves text/brand score without structural regression, even if it does not fully reach a clean B pass.
+**Minimum viable:** The final edit step materially improves text/brand score without structural regression, even if it does not fully reach a clean B pass.
 
 ## Benchmark modes
 
@@ -73,6 +73,6 @@ Edit using the target image as a reference. Valid as supporting evidence for the
 1. Generate baseline candidate from strict refs
 2. Evaluate it
 3. Choose best candidate by structure + overall fidelity
-4. Run targeted remediation (edit or compositing)
+4. Run a targeted edit or compositing step
 5. Evaluate again
 6. Select final candidate

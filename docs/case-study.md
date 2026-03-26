@@ -8,7 +8,7 @@ The core question is simple:
 
 > Given only non-target references for one product, can the system produce a publishable held-out target shot and then prove how faithful it is?
 
-This repo answers that question with a strict benchmark, a three-layer evaluator, and a second-step edit process that is judged by the same benchmark.
+This repo answers that question with a strict benchmark, a three-layer evaluator, and a second edit step that is judged by the same benchmark.
 
 ## Problem
 
@@ -51,7 +51,7 @@ It follows a simple loop:
 1. generate a candidate
 2. evaluate it
 3. diagnose what failed
-4. apply constrained remediation
+4. run a second edit step
 5. re-evaluate and verify the delta
 
 ## The strict benchmark
@@ -87,13 +87,13 @@ Under the strict benchmark:
 | Stage | Grade | Overall | Text | Brand |
 |-------|-------|---------|------|-------|
 | One-shot baseline | B | 0.709 | 0.000 | 0.374 |
-| Strict edit remediation | B | 0.824 | 0.429 | 0.641 |
+| Strict edit step | B | 0.824 | 0.429 | 0.641 |
 
 What this means:
 
 - one-shot generation produced a plausible bottle but failed on critical brand text
 - the evaluator caught that failure clearly
-- a constrained edit step, still under the strict protocol, recovered key label text
+- a second edit step, still under the strict protocol, recovered key label text
 - the evaluator verified that brand fidelity improved without structural regression
 
 ## What makes this interesting
@@ -103,7 +103,7 @@ I don’t think this project proves that I solved product generation. I think it
 - rigorous benchmark design
 - evaluator-first AI engineering
 - honest falsification of weak approaches
-- evidence-based remediation
+- evidence-based iteration
 - reproducible demo packaging
 
 I wanted to keep the project honest about what failed, what improved, and what is still unresolved.
@@ -122,7 +122,7 @@ That limitation is part of the value of the project: the benchmark makes the cei
 2. Open `Strict Baseline`
 3. Open `Strict Edit`
 4. Inspect the `Why This Verdict`, `Benchmark Context`, and `Brand Integrity` sections
-5. Read the experiment memo in [`docs/experiments/2026-03-25-strict-benchmark-v1.md`](./experiments/2026-03-25-strict-benchmark-v1.md)
+5. If you want more implementation detail, skim the README and benchmark protocol doc
 
 ## Takeaway
 
@@ -131,7 +131,7 @@ Product Fidelity Lab demonstrates a realistic AI engineering loop for product im
 - benchmark fairly
 - evaluate rigorously
 - diagnose failures
-- remediate in a constrained way
+- improve the result in a controlled way
 - prove the improvement with evidence
 
 That is the main claim of the project.

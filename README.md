@@ -2,7 +2,7 @@
 
 When an AI-generated product shot looks plausible at first glance, how do you actually prove it's good enough to publish?
 
-This project is my answer to that. It's an evaluation system and improvement loop for AI-generated product photography. Given only non-target reference images of a product, it generates a held-out candidate for a target shot, evaluates it against a frozen golden benchmark, identifies exactly where it fails, and applies constrained remediation to improve fidelity, all under a strict protocol that prevents the target image from ever leaking into the inputs.
+This project is my answer to that. It's an evaluation system and improvement loop for AI-generated product photography. Given only non-target reference images of a product, it generates a held-out candidate for a target shot, evaluates it against a frozen golden benchmark, identifies exactly where it fails, and uses a second edit step to improve fidelity, all under a strict protocol that prevents the target image from ever leaking into the inputs.
 
 ## Start here
 
@@ -16,7 +16,7 @@ If you only spend 2 minutes on this repo:
 
 ## The claim
 
-Under a strict held-out protocol, one-shot generation fails on brand-critical text. Constrained edit remediation materially improves fidelity without structural regression. The evaluator proves both claims with evidence.
+Under a strict held-out protocol, one-shot generation fails on brand-critical text. A second edit step materially improves fidelity without structural regression. The evaluator proves both claims with evidence.
 
 ## At a glance
 
@@ -25,26 +25,26 @@ Under a strict held-out protocol, one-shot generation fails on brand-critical te
 | What is it?     | An evaluator-first benchmark and improvement loop for product imagery               |
 | Why is it fair? | Frozen golden specs, hard gates, calibrated thresholds, strict non-leaking protocol |
 | What failed?    | One-shot generation under the strict protocol                                       |
-| What worked?    | Constrained edit remediation using only allowed references                          |
+| What worked?    | A second edit step using only allowed references                                    |
 | What matters?   | The evaluator proves the delta, not just visual intuition                           |
 
 ## Benchmark results
 
-Protocol: `strict_hero_front_straight` , target image and all hero angles forbidden from inputs.
+Protocol: `strict_hero_front_straight` — target image and all hero angles forbidden from inputs.
 
 | Stage             | Grade | Overall | Text  | Brand | AFV Delta |
 | ----------------- | ----- | ------- | ----- | ----- | --------- |
 | One-shot baseline | B     | 0.709   | 0.000 | 0.374 | —         |
-| Edit remediation  | B     | 0.824   | 0.429 | 0.641 | 0.000     |
+| Second edit step | B     | 0.824   | 0.429 | 0.641 | 0.000     |
 
-The edit recovered BACARDI label text (0.000 -> 0.429), improved brand score by +0.267, and reached 0.824 overall, with zero AFV regression and positive depth deltas across all 8 runs. Full experiment details live in `docs/experiments/`.
+The edit recovered BACARDI label text (0.000 -> 0.429), improved brand score by +0.267, and reached 0.824 overall, with zero AFV regression and positive depth deltas across all 8 runs.
 
 ## Demo flow
 
 - Replay demo: `uv run pfl-demo --replay`
 - Start on the `Showcase` tab
 - Open `Strict Baseline` to see the one-shot failure
-- Open `Strict Edit` to see the remediation result
+- Open `Strict Edit` to see the second-step edit result
 - Use the report view to inspect verdict logic, AFV evidence, OCR matches, color fidelity, and benchmark context
 
 ![Strict edit report](docs/assets/readme-report.png)
@@ -97,16 +97,16 @@ For a short narrative walkthrough, see [`docs/case-study.md`](docs/case-study.md
 ### Improvement loop
 
 1. **Generate** baseline candidate from strict references
-2. **Evaluate** it, the evaluator identifies blank label text as a hard-gate failure
-3. **Search** , systematic exploration proves prompt tuning alone can't fix it (22 runs, 0.000 text across all configs)
-4. **Remediate** , constrained edit using only `label_closeup` and `side_left` recovers label text
-5. **Re-evaluate** , the evaluator confirms the improvement and checks for structural regression
+2. **Evaluate** it. The evaluator identifies blank label text as a hard-gate failure.
+3. **Search**. Systematic exploration proves prompt tuning alone can't fix it (22 runs, 0.000 text across all configs).
+4. **Edit**. A second edit step using only `label_closeup` and `side_left` recovers label text.
+5. **Re-evaluate**. The evaluator confirms the improvement and checks for structural regression.
 
-This is not pure one-shot generation. It's an evaluator-guided pipeline that treats generation failures as inputs to a remediation step, and uses the evaluator to prove the fix worked.
+This is not pure one-shot generation. It's an evaluator-guided pipeline that treats generation failures as inputs to a second edit step and uses the evaluator to prove the fix worked.
 
 ## Supporting experiment history
 
-These runs are included to show the iteration path that led to the final strict benchmark. The canonical path through the project is the strict baseline plus strict edit remediation.
+These runs are included to show the iteration path that led to the final strict benchmark. The canonical path through the project is the strict baseline plus the strict edit step.
 
 | Experiment                          | Runs  | Cost      | Finding                                                                   |
 | ----------------------------------- | ----- | --------- | ------------------------------------------------------------------------- |
@@ -114,7 +114,7 @@ These runs are included to show the iteration path that led to the final strict 
 | One-shot search (label-fidelity-v1) | 22    | $0.95     | Prompt/reference/guidance tuning cannot recover label text                |
 | Reference-conditioned edit          | 7     | $0.42     | Edit with target reference produces A grades (secondary evidence)         |
 | Held-out one-shot                   | 16    | $0.80     | Confirms ceiling without hero angles                                      |
-| Held-out edit                       | 8     | $0.24     | Non-leaking remediation works, but still relies on a hero-angle reference |
+| Held-out edit                       | 8     | $0.24     | Non-leaking second edit step works, but still relies on a hero-angle reference |
 | **Strict baseline**                 | **4** | **$0.20** | **Text 0.000 across all runs under strict protocol**                      |
 | **Strict edit**                     | **8** | **$0.48** | **Text 0.429, brand +0.267, zero AFV regression**                         |
 
@@ -136,7 +136,7 @@ uv run pfl-demo --replay
 # http://localhost:8000
 ```
 
-In replay mode, start with the `Showcase` tab. It opens on the strict benchmark story with a curated baseline failure and strict remediation success.
+In replay mode, start with the `Showcase` tab. It opens on the strict benchmark story with a curated baseline failure and strict edit success.
 
 ### Live mode
 
@@ -182,8 +182,7 @@ Older scripts such as `run_search.py`, `run_heldout_search.py`, and `run_label_e
 ├── docs/
 │   ├── assets/                # README screenshots
 │   ├── case-study.md          # Short narrative walkthrough
-│   ├── benchmark-protocol.md   # What counts as leakage, what's allowed
-│   └── experiments/            # Per-experiment memos
+│   └── benchmark-protocol.md   # What counts as leakage, what's allowed
 ├── scripts/                    # Baseline, search, edit, calibration, perturbations
 └── tests/                      # 174 tests (unit + integration)
 ```
