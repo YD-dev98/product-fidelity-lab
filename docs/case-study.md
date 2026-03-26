@@ -6,9 +6,9 @@ Product Fidelity Lab is an evaluator-first benchmark and improvement loop for AI
 
 The core question is simple:
 
-> Given only non-target references for one product, can the system produce a publishable held-out target shot and prove its fidelity?
+> Given only non-target references for one product, can the system produce a publishable held-out target shot and then prove how faithful it is?
 
-This repo answers that question with a strict benchmark, a three-layer evaluator, and a remediation loop that is measured rather than hand-waved.
+This repo answers that question with a strict benchmark, a three-layer evaluator, and a second-step edit process that is judged by the same benchmark.
 
 ## Problem
 
@@ -46,7 +46,7 @@ Critical failures trigger hard gates. A candidate can have a decent weighted sco
 
 The system is not “generate and hope.”
 
-It follows a product-shaped loop:
+It follows a simple loop:
 
 1. generate a candidate
 2. evaluate it
@@ -98,7 +98,7 @@ What this means:
 
 ## What makes this interesting
 
-This project is strongest not as “I solved product generation,” but as:
+I don’t think this project proves that I solved product generation. I think it does show:
 
 - rigorous benchmark design
 - evaluator-first AI engineering
@@ -106,7 +106,7 @@ This project is strongest not as “I solved product generation,” but as:
 - evidence-based remediation
 - reproducible demo packaging
 
-The project does not overclaim. It shows what failed, what improved, and why the final result is still meaningful.
+I wanted to keep the project honest about what failed, what improved, and what is still unresolved.
 
 ## What remains unsolved
 
