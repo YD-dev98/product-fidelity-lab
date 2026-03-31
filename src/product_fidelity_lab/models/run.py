@@ -11,6 +11,9 @@ class RunType(StrEnum):
     EVALUATION = "evaluation"
     GENERATION = "generation"
     PERTURBATION = "perturbation"
+    INGEST = "ingest"
+    RENDER = "render"
+    TRAIN = "train"
 
 
 class RunStatus(StrEnum):

@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from product_fidelity_lab.config import get_settings
+from product_fidelity_lab.storage.product_store import ProductStore
 from product_fidelity_lab.storage.replay import ReplayStore
 from product_fidelity_lab.storage.run_store import RunStore
 
@@ -38,6 +39,7 @@ logger = structlog.get_logger()
 
 _run_store: RunStore | None = None
 _replay_store: ReplayStore | None = None
+_product_store: ProductStore | None = None
 
 
 def get_run_store() -> RunStore:
@@ -49,9 +51,14 @@ def get_replay_store() -> ReplayStore | None:
     return _replay_store
 
 
+def get_product_store() -> ProductStore:
+    assert _product_store is not None, "ProductStore not initialized"
+    return _product_store
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    global _run_store, _replay_store  # noqa: PLW0603
+    global _run_store, _replay_store, _product_store  # noqa: PLW0603
     settings = get_settings()
 
     # Propagate keys to os.environ for third-party libs (fal-client) — only in live mode
@@ -67,6 +74,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     recovered = await _run_store.recover_interrupted()
     if recovered:
         logger.info("startup.recovered_interrupted_runs", count=recovered)
+
+    # Initialize ProductStore
+    _product_store = ProductStore(
+        db_path=settings.db_path,
+        products_dir=settings.products_dir,
+    )
+    await _product_store.initialize()
+    from product_fidelity_lab.generation.presets import BUILTIN_PRESETS
+
+    await _product_store.seed_builtin_presets(BUILTIN_PRESETS)
 
     # Initialize ReplayStore
     replay_dir = settings.data_dir / "replay"
@@ -95,10 +112,14 @@ app = FastAPI(
 from product_fidelity_lab.api.evaluate import router as evaluate_router  # noqa: E402
 from product_fidelity_lab.api.generate import router as generate_router  # noqa: E402
 from product_fidelity_lab.api.golden import router as golden_router  # noqa: E402
+from product_fidelity_lab.api.products import router as products_router  # noqa: E402
+from product_fidelity_lab.api.render import router as render_router  # noqa: E402
 
 app.include_router(evaluate_router)
 app.include_router(generate_router)
 app.include_router(golden_router)
+app.include_router(products_router)
+app.include_router(render_router)
 
 # Serve frontend
 frontend_dir = Path(__file__).parent.parent.parent / "frontend"

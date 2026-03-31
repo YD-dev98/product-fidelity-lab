@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     data_dir: Path = Field(default=Path("data"), description="Root data directory")
     db_path: Path = Field(default=Path("data/pfl.db"), description="SQLite database path")
+    products_dir: Path = Field(default=Path("data/products"), description="Product data root")
+    max_upload_images: int = Field(default=10, description="Max images per product upload")
 
     fal_timeout_s: int = Field(default=120, description="fal.ai request timeout in seconds")
     fal_max_concurrent: int = Field(default=3, description="Max concurrent fal.ai requests")
