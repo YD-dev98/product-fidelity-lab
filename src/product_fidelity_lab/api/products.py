@@ -218,6 +218,184 @@ async def confirm_profile(
     return profile.model_dump()
 
 
+class TrainRequest(BaseModel):
+    trigger_word: str = "PRODSHOT"
+    provider: str = "fal"
+
+
+@router.post("/products/{product_id}/train", status_code=202)
+async def train_model(
+    product_id: str,
+    req: TrainRequest,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Start training a product model. Returns run_id."""
+    settings = get_settings()
+    if not settings.live_ready:
+        raise HTTPException(503, "Live mode unavailable — API keys not configured")
+
+    product_store = get_product_store()
+    run_store = get_run_store()
+
+    product = await product_store.get_product(product_id)
+    if product is None:
+        raise HTTPException(404, "Product not found")
+
+    profile = await product_store.get_profile(product_id)
+    if profile is None:
+        raise HTTPException(422, "Product has no profile — upload images first")
+
+    # Gather training image URLs
+    from product_fidelity_lab.models.product import AssetType
+
+    assets = await product_store.get_assets(product_id)
+    image_urls = [
+        a.fal_url for a in assets
+        if a.asset_type in (AssetType.RAW_UPLOAD, AssetType.CLEANED)
+        and a.fal_url
+    ]
+    if not image_urls:
+        raise HTTPException(422, "No uploaded images with URLs available for training")
+
+    run = await run_store.create_run(
+        RunType.TRAIN,
+        config={
+            "product_id": product_id,
+            "provider": req.provider,
+            "trigger_word": req.trigger_word,
+            "image_count": len(image_urls),
+        },
+    )
+
+    background_tasks.add_task(
+        _run_train_job, product_id, image_urls, req.trigger_word, req.provider, run.id
+    )
+
+    return {"run_id": run.id}
+
+
+class EvaluateRenderRequest(BaseModel):
+    render_run_id: str
+
+
+@router.post("/products/{product_id}/evaluate", status_code=202)
+async def evaluate_render(
+    product_id: str,
+    req: EvaluateRenderRequest,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Run deep QA evaluation on a completed render.
+
+    Builds a synthetic spec from the product profile and runs AFV + brand
+    checks (no depth). Opt-in — separate from the lightweight QA in the
+    render pipeline.
+    """
+    settings = get_settings()
+    if not settings.live_ready:
+        raise HTTPException(503, "Live mode unavailable — API keys not configured")
+
+    product_store = get_product_store()
+    run_store = get_run_store()
+
+    product = await product_store.get_product(product_id)
+    if product is None:
+        raise HTTPException(404, "Product not found")
+
+    profile = await product_store.get_profile(product_id)
+    if profile is None:
+        raise HTTPException(422, "Product has no profile")
+
+    # Load the render run and verify it belongs to this product
+    render_run = await run_store.get_run(req.render_run_id)
+    if render_run is None:
+        raise HTTPException(404, f"Render run not found: {req.render_run_id}")
+    if render_run.type != RunType.RENDER:
+        raise HTTPException(422, "Not a render run")
+    if render_run.config.get("product_id") != product_id:
+        raise HTTPException(422, "Render run does not belong to this product")
+    if render_run.result is None:
+        raise HTTPException(422, "Render run has no result — still running?")
+
+    final_url = render_run.result.get("final_image_url")
+    if not final_url:
+        raise HTTPException(422, "Render run has no final image")
+
+    eval_run = await run_store.create_run(
+        RunType.EVALUATION,
+        config={
+            "product_id": product_id,
+            "render_run_id": req.render_run_id,
+            "image_url": final_url,
+            "source": "product_evaluate",
+        },
+    )
+
+    background_tasks.add_task(
+        _run_product_eval_job, product_id, final_url, eval_run.id,
+    )
+
+    return {"run_id": eval_run.id}
+
+
+@router.get("/products/{product_id}/model")
+async def get_model(product_id: str) -> dict[str, Any]:
+    store = get_product_store()
+    model = await store.get_model(product_id)
+    if model is None:
+        raise HTTPException(404, "No model trained for this product")
+    return model.model_dump()
+
+
+async def _run_product_eval_job(
+    product_id: str,
+    image_url: str,
+    run_id: str,
+) -> None:
+    """Background task for product evaluation."""
+    settings = get_settings()
+    product_store = get_product_store()
+    run_store = get_run_store()
+
+    try:
+        await run_store.update_status(run_id, RunStatus.RUNNING)
+
+        profile = await product_store.get_profile(product_id)
+        if profile is None:
+            raise ValueError("Profile not found")
+
+        from product_fidelity_lab.evaluation.product_eval import (
+            run_product_evaluation,
+        )
+        from product_fidelity_lab.generation.client import FalClient
+
+        fal = FalClient(
+            timeout_s=settings.fal_timeout_s,
+            max_concurrent=settings.fal_max_concurrent,
+        )
+
+        result = await run_product_evaluation(
+            image_url,
+            profile,
+            fal_client=fal,
+            gemini_api_key=settings.gemini_api_key,
+            gemini_model=settings.gemini_model,
+        )
+
+        await run_store.update_status(run_id, RunStatus.COMPLETE)
+        await run_store.update_result(
+            run_id,
+            result=result,
+            score=result["overall"],
+            grade=result["grade"],
+            passed=result["passed"],
+            duration_ms=result["duration_ms"],
+        )
+
+    except Exception as exc:
+        logger.error("product_eval.job_failed", run_id=run_id, error=str(exc))
+        await run_store.update_status(run_id, RunStatus.FAILED)
+
+
 @router.delete("/products/{product_id}")
 async def delete_product(product_id: str) -> dict[str, bool]:
     store = get_product_store()
@@ -226,6 +404,59 @@ async def delete_product(product_id: str) -> dict[str, bool]:
         raise HTTPException(404, "Product not found")
     await store.delete_product(product_id)
     return {"deleted": True}
+
+
+async def _run_train_job(
+    product_id: str,
+    image_urls: list[str],
+    trigger_word: str,
+    provider_name: str,
+    run_id: str,
+) -> None:
+    """Background task for model training."""
+    product_store = get_product_store()
+    run_store = get_run_store()
+
+    try:
+        await run_store.update_status(run_id, RunStatus.RUNNING)
+
+        from product_fidelity_lab.generation.client import FalClient
+        from product_fidelity_lab.product.provider import get_provider
+
+        fal = FalClient(
+            timeout_s=600,  # Training can take several minutes
+            max_concurrent=1,
+        )
+        provider = get_provider(provider_name, fal)
+
+        model = await provider.start_training(
+            product_id, image_urls, trigger_word, product_store,
+        )
+
+        from product_fidelity_lab.models.product import ModelStatus, ProductStatus
+
+        if model.status == ModelStatus.READY:
+            await run_store.update_status(run_id, RunStatus.COMPLETE)
+            await run_store.update_result(
+                run_id,
+                result={
+                    "product_id": product_id,
+                    "model_id": model.external_model_id,
+                    "status": model.status.value,
+                },
+            )
+            # Update product status to ready
+            await product_store.update_product(product_id, status=ProductStatus.READY)
+        else:
+            await run_store.update_status(run_id, RunStatus.FAILED)
+            await run_store.update_result(
+                run_id,
+                result={"product_id": product_id, "status": model.status.value},
+            )
+
+    except Exception as exc:
+        logger.error("train.job_failed", run_id=run_id, error=str(exc))
+        await run_store.update_status(run_id, RunStatus.FAILED)
 
 
 async def _run_ingest_job(

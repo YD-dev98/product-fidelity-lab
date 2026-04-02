@@ -52,6 +52,19 @@ Respond with a JSON array of objects, one per image, in the same order:
 
 Only output the JSON array, no other text."""
 
+REGION_DETECT_PROMPT = """You are analyzing a product photo.
+Identify the bounding boxes for the logo and the label/text area.
+Use normalized coordinates (0.0 to 1.0) relative to image dimensions.
+
+Respond with JSON:
+{{
+  "logo": {{"x": 0.3, "y": 0.1, "width": 0.4, "height": 0.15}} or null,
+  "label": {{"x": 0.2, "y": 0.3, "width": 0.6, "height": 0.4}} or null
+}}
+
+If no logo or label is visible, set that field to null.
+Only output the JSON object, no other text."""
+
 
 async def ingest_product_images(
     product_id: str,
@@ -178,7 +191,33 @@ async def ingest_product_images(
             logger.warning("ingest.color_failed", asset_id=asset.id)
     builder.set_colors(colors_hex)
 
-    # 6. Batched angle tagging via Gemini
+    # 6. Logo/label region detection + cropping via Gemini
+    logo_asset_id: str | None = None
+    label_asset_id: str | None = None
+    # Use the first front-facing raw image, or first raw image
+    detect_asset = next(
+        (a for a in raw_assets if a.angle_tag == AngleTag.FRONT and a.fal_url),
+        next((a for a in raw_assets if a.fal_url), None),
+    )
+    if detect_asset is not None:
+        try:
+            regions = await _detect_logo_label_regions(
+                detect_asset, gemini_api_key, gemini_model,
+            )
+            if regions.get("logo"):
+                logo_asset_id = await _crop_and_store_region(
+                    detect_asset, regions["logo"], AssetType.LOGO_CROP,
+                    product_id, product_store,
+                )
+            if regions.get("label"):
+                label_asset_id = await _crop_and_store_region(
+                    detect_asset, regions["label"], AssetType.LABEL_CROP,
+                    product_id, product_store,
+                )
+        except Exception:
+            logger.warning("ingest.region_detect_failed", asset_id=detect_asset.id)
+
+    # 7. Batched angle tagging via Gemini
     await _tag_angles_batched(
         raw_assets, gemini_api_key, gemini_model, product_store
     )
@@ -192,6 +231,10 @@ async def ingest_product_images(
     builder.set_colors(colors_hex)
     if alpha_mask_id is not None:
         builder.set_alpha_mask(alpha_mask_id)
+    if logo_asset_id is not None:
+        builder.set_logo(logo_asset_id)
+    if label_asset_id is not None:
+        builder.set_label(label_asset_id)
 
     # 7. Build and store profile
     profile = builder.build()
@@ -283,6 +326,134 @@ async def _tag_angles_batched(
 
     except Exception:
         logger.warning("ingest.angle_tagging_failed", count=len(urls_with_data))
+
+
+async def _detect_logo_label_regions(
+    asset: ProductAsset,
+    gemini_api_key: str,
+    gemini_model: str,
+) -> dict[str, dict[str, float] | None]:
+    """Detect logo and label bounding boxes via Gemini vision.
+
+    Returns {"logo": {x, y, width, height} | None, "label": ... | None}.
+    Bounding boxes are stored in asset metadata for composite placement.
+    """
+    from google import genai
+
+    img_bytes = Path(asset.file_path).read_bytes()
+    mime = _detect_mime(asset.file_path)
+
+    client = genai.Client(api_key=gemini_api_key)
+    response = await client.aio.models.generate_content(
+        model=gemini_model,
+        contents=[
+            genai.types.Part.from_bytes(data=img_bytes, mime_type=mime),
+            REGION_DETECT_PROMPT,
+        ],
+    )
+
+    text = (response.text or "").strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        text = "\n".join(lines[1:])
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+
+    result: dict[str, Any] = json.loads(text)
+    logger.info(
+        "ingest.regions_detected",
+        has_logo=result.get("logo") is not None,
+        has_label=result.get("label") is not None,
+    )
+    return result
+
+
+async def _crop_and_store_region(
+    source_asset: ProductAsset,
+    bbox: dict[str, float],
+    asset_type: AssetType,
+    product_id: str,
+    product_store: ProductStore,
+) -> str:
+    """Crop a region from the source image and store as a new asset.
+
+    Stores the bounding box in asset metadata for later composite placement.
+    Returns the new asset ID.
+    """
+    import fal_client as fal_mod
+
+    img = Image.open(source_asset.file_path)
+    w, h = img.size
+
+    # Normalize bbox — Gemini sometimes returns mixed pixel/normalized coords
+    raw_x = float(bbox.get("x", 0))
+    raw_y = float(bbox.get("y", 0))
+    raw_w = float(bbox.get("width", 0.1))
+    raw_h = float(bbox.get("height", 0.1))
+
+    # Normalize each coordinate independently (handles mixed formats)
+    if raw_x > 1.0:
+        raw_x = raw_x / w
+    if raw_y > 1.0:
+        raw_y = raw_y / h
+    if raw_w > 1.0:
+        raw_w = raw_w / w
+    if raw_h > 1.0:
+        raw_h = raw_h / h
+
+    # Clamp to valid range
+    x = max(0.0, min(1.0, raw_x))
+    y = max(0.0, min(1.0, raw_y))
+    bw = max(0.01, min(1.0 - x, raw_w))
+    bh = max(0.01, min(1.0 - y, raw_h))
+
+    left = int(x * w)
+    top = int(y * h)
+    right = int((x + bw) * w)
+    bottom = int((y + bh) * h)
+
+    cropped = img.crop((left, top, right, bottom))
+
+    # Save cropped region
+    import tempfile
+
+    crop_dir = product_store.assets_dir(product_id)
+    suffix = ".png"
+    with tempfile.NamedTemporaryFile(
+        dir=str(crop_dir), suffix=suffix, delete=False,
+    ) as tmp:
+        cropped.save(tmp, format="PNG")
+        crop_path = Path(tmp.name)
+
+    # Upload to fal
+    crop_url: str = await fal_mod.upload_file_async(crop_path)  # type: ignore[reportUnknownMemberType]
+
+    crop_w, crop_h = cropped.size
+    asset_id = uuid.uuid4().hex[:12]
+    crop_asset = ProductAsset(
+        id=asset_id,
+        product_id=product_id,
+        asset_type=asset_type,
+        file_path=str(crop_path),
+        fal_url=crop_url,
+        width=crop_w,
+        height=crop_h,
+        angle_tag=source_asset.angle_tag,
+        metadata={
+            "source_asset_id": source_asset.id,
+            "bbox": {"x": x, "y": y, "width": bw, "height": bh},
+        },
+    )
+    await product_store.add_asset(crop_asset)
+
+    logger.info(
+        "ingest.region_cropped",
+        asset_type=asset_type.value,
+        asset_id=asset_id,
+        bbox=bbox,
+    )
+    return asset_id
 
 
 def _detect_mime(file_path_or_url: str) -> str:

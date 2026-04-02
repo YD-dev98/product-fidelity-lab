@@ -11,9 +11,12 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from product_fidelity_lab.config import get_settings
 from product_fidelity_lab.main import get_product_store, get_run_store
 from product_fidelity_lab.models.preset import (
+    Candidate,
+    QAResult,
     RenderRequest,
     RenderResult,
     RenderTrace,
+    RepairAction,
     StudioPreset,
 )
 from product_fidelity_lab.models.run import RunStatus, RunType
@@ -138,10 +141,11 @@ async def _run_render_job(
         if not reference_urls:
             raise ValueError("No usable reference images with URLs")
 
-        # Route strategy
+        # Route strategy (use adapter if product has a trained model)
         from product_fidelity_lab.generation.strategy import route_strategy
 
-        strategy = route_strategy(product, preset)
+        product_model = await product_store.get_model(req.product_id)
+        strategy = route_strategy(product, preset, product_model)
 
         # Generate candidates
         from product_fidelity_lab.generation.client import FalClient
@@ -232,6 +236,34 @@ async def _run_render_job(
         else:
             selected = candidates
 
+        # ── Repair ──────────────────────────────────────────────────
+        from product_fidelity_lab.repair.composite import (
+            execute_repair,
+            is_repair_eligible,
+            plan_repair,
+        )
+
+        repaired: list[Candidate] = []
+        repair_actions: list[RepairAction] = []
+
+        if (
+            not req.skip_repair
+            and is_repair_eligible(preset)
+            and selected
+        ):
+            for sel in selected:
+                plan = await plan_repair(sel, profile, preset)
+                if plan.actions:
+                    fixed = await execute_repair(
+                        sel, plan, product_store, fal,
+                    )
+                    repaired.append(fixed)
+                    repair_actions.extend(plan.actions)
+                else:
+                    repaired.append(sel)
+        else:
+            repaired = list(selected)
+
         # ── Build trace ─────────────────────────────────────────────
         trace = RenderTrace(
             final_prompt=final_prompt,
@@ -240,12 +272,27 @@ async def _run_render_job(
             provider_payload=provider_payload,
             strategy_used=candidates[0].strategy_used if candidates else "reference_only",
             seeds=[c.seed for c in candidates],
+            repair_actions=repair_actions,
             preset_snapshot=preset,
             profile_snapshot=profile,
             ranker_version=ranker_version,
             filter_summary=filter_summary,
             judge_summary=judge_summary,
         )
+
+        # ── QA evaluation ───────────────────────────────────────────
+        final_url = repaired[0].image_url if repaired else (
+            selected[0].image_url if selected else None
+        )
+        qa_result: QAResult | None = None
+
+        if not req.skip_qa and final_url and profile.critical_texts:
+            try:
+                qa_result = await _run_qa(
+                    final_url, profile, fal,
+                )
+            except Exception:
+                logger.warning("render.qa_failed", run_id=run_id)
 
         # ── Build result ────────────────────────────────────────────
         result = RenderResult(
@@ -254,11 +301,13 @@ async def _run_render_job(
             preset_id=req.preset_id,
             candidates=candidates,
             selected=selected,
-            final_image_url=selected[0].image_url if selected else None,
+            repaired=repaired,
+            final_image_url=final_url,
             total_duration_ms=total_ms,
             total_cost=total_cost,
             trace=trace,
             warnings=warnings,
+            qa=qa_result,
         )
 
         await run_store.update_status(run_id, RunStatus.COMPLETE)
@@ -279,3 +328,67 @@ async def _run_render_job(
     except Exception as exc:
         logger.error("render.job_failed", run_id=run_id, error=str(exc))
         await run_store.update_status(run_id, RunStatus.FAILED)
+
+
+async def _run_qa(
+    image_url: str,
+    profile: Any,
+    fal_client: Any,
+) -> QAResult:
+    """Run lightweight brand QA on the final rendered image.
+
+    Uses the existing OCR + color evaluation infrastructure against
+    the product profile (not a golden spec).
+    """
+    from product_fidelity_lab.evaluation.layer_brand import (
+        compare_text,
+        extract_text,
+    )
+    from product_fidelity_lab.models.golden_spec import ExpectedText
+
+    # Build expected texts from profile critical_texts
+    expected = [
+        ExpectedText(text=t, critical=True, match_mode="exact_token")
+        for t in profile.critical_texts
+    ]
+
+    # Run OCR
+    extracted = await extract_text(image_url, fal_client)
+    text_result = compare_text(expected, extracted)
+
+    # Run color comparison
+    color_score = 1.0
+    if profile.brand_colors_hex:
+        from io import BytesIO
+
+        from PIL import Image
+
+        from product_fidelity_lab.evaluation.color import (
+            compare_to_brand_colors,
+            extract_dominant_colors,
+        )
+        from product_fidelity_lab.evaluation.image_fetch import fetch_image_bytes
+
+        img_bytes = await fetch_image_bytes(image_url)
+        img = Image.open(BytesIO(img_bytes))
+        extracted_lab = extract_dominant_colors(img, n_colors=5)
+        color_score, _ = compare_to_brand_colors(extracted_lab, profile.brand_colors_hex)
+
+    combined = 0.4 * text_result.score + 0.6 * color_score
+    passed = combined >= 0.7 and not text_result.critical_failures
+
+    logger.info(
+        "render.qa_complete",
+        text_score=text_result.score,
+        color_score=color_score,
+        combined=combined,
+        passed=passed,
+    )
+
+    return QAResult(
+        text_score=text_result.score,
+        color_score=color_score,
+        combined_score=round(combined, 3),
+        critical_text_failures=text_result.critical_failures,
+        passed=passed,
+    )

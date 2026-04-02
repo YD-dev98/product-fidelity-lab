@@ -77,6 +77,7 @@ class RenderRequest(BaseModel):
     seed: int | None = None
     skip_repair: bool = False
     skip_ranking: bool = False
+    skip_qa: bool = False
 
 
 class Candidate(BaseModel):
@@ -118,6 +119,16 @@ class RenderTrace(BaseModel):
     judge_summary: dict[str, Any] = Field(default_factory=dict)
 
 
+class QAResult(BaseModel):
+    """Lightweight QA evaluation of the final rendered image."""
+
+    text_score: float | None = None
+    color_score: float | None = None
+    combined_score: float | None = None
+    critical_text_failures: list[str] = Field(default_factory=list)
+    passed: bool | None = None
+
+
 class RenderResult(BaseModel):
     """Final output of a render job."""
 
@@ -132,6 +143,7 @@ class RenderResult(BaseModel):
     total_cost: float = 0.0
     trace: RenderTrace = Field(default_factory=RenderTrace)
     warnings: list[str] = Field(default_factory=list)
+    qa: QAResult | None = None
 
 
 class RepairPlan(BaseModel):

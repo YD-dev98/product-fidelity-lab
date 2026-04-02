@@ -148,10 +148,9 @@ def compile_prompt(
     if style_prompt:
         parts.append(style_prompt)
 
-    # Brand text hints
-    if profile.critical_texts:
-        texts = ", ".join(f'"{t}"' for t in profile.critical_texts)
-        parts.append(f"The product label reads: {texts}.")
+    # Note: brand names are intentionally excluded from the generation prompt
+    # to avoid content-policy violations from providers. Label fidelity is
+    # enforced via reference images and evaluated post-generation.
 
     # Reference tags
     for i in range(1, n_references + 1):
